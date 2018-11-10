@@ -29,6 +29,12 @@ def make_parent_dirs(path):
     make_dirs(dir)
 
 
+def get_dirs(parent_dir):
+    dirs = [os.path.join(parent_dir, dir) for dir in os.listdir(parent_dir)]
+    dirs = [dir for dir in dirs if os.path.isdir(dir)]
+    return dirs
+
+
 def save_json(data, path):
     make_parent_dirs(path)
     with open(path, 'w') as f:
@@ -42,16 +48,16 @@ def load_json(path):
     return data
 
 
-def save_csv(df, path, fields=None):
+def save_csv(df, path, fields=None, **kwargs):
     make_parent_dirs(path)
     if fields is not None:
         df = df[fields]
-    df.to_csv(path, index=False)
+    df.to_csv(path, index=False, **kwargs)
     print("Save csv data (size = {}) to {} done".format(df.shape[0], path))
 
 
-def load_csv(path, columns=None):
-    df = pd.read_csv(path, usecols=columns)
+def load_csv(path, **kwargs):
+    df = pd.read_csv(path, **kwargs)
     print("Load csv data (size = {}) from {} done".format(df.shape[0], path))
 
     return df

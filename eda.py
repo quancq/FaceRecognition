@@ -49,4 +49,5 @@ def calculate_class_distribution():
 
 
 if __name__ == "__main__":
-    calculate_class_distribution()
+    # calculate_class_distribution()
+    pass
