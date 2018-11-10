@@ -35,6 +35,11 @@ def get_dirs(parent_dir):
     return dirs
 
 
+def get_paths(parent_dir):
+    dirs = [os.path.join(parent_dir, dir) for dir in os.listdir(parent_dir)]
+    return dirs
+
+
 def save_json(data, path):
     make_parent_dirs(path)
     with open(path, 'w') as f:
