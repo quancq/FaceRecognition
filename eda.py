@@ -5,13 +5,13 @@ import os
 from utils import utils, plot_utils
 
 
-def calculate_class_distribution():
-    org_dataset_dir = "/home/quanchu/Dataset/FaceImagCroppedWithAlignmentShorten"
+def calculate_class_distribution(dataset_dir):
+    # dataset_dir = "/home/quanchu/Dataset/FaceImagCroppedWithAlignmentShorten"
     lst = []
 
-    dirs = os.listdir(org_dataset_dir)
+    dirs = os.listdir(dataset_dir)
     for dir in dirs:
-        full_dir_path = os.path.join(org_dataset_dir, dir)
+        full_dir_path = os.path.join(dataset_dir, dir)
         num_files = len(os.listdir(full_dir_path))
 
         lst.append((dir, num_files))
@@ -19,7 +19,7 @@ def calculate_class_distribution():
 
     df = pd.DataFrame(lst, columns=["Class", "Number Samples"])
 
-    save_dir = "./EDA"
+    save_dir = "./EDA/Version2"
 
     # Save file contain number samples of each class
     utils.save_csv(df, os.path.join(save_dir, "Class-NumSamples.csv"))
@@ -45,9 +45,9 @@ def calculate_class_distribution():
         ylabel="Number classes",
     )
 
-    print("In {}: has {} dirs".format(org_dataset_dir, len(dirs)))
+    print("In {}: has {} dirs".format(dataset_dir, len(dirs)))
 
 
 if __name__ == "__main__":
-    # calculate_class_distribution()
+    calculate_class_distribution(dataset_dir="/home/quanchu/Dataset/Version2")
     pass
