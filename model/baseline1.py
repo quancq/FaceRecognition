@@ -144,6 +144,8 @@ def create_subset_data(face_encoding_dir, src_dataset_dir, dst_dataset_dir):
                 dst_path = os.path.join(dst_dataset_dir, mid, fname)
 
                 src_dst_copy_paths.append((src_path, dst_path))
+        else:
+            utils.make_dirs(os.path.join(dst_dataset_dir, mid))
 
     num_success = utils.copy_files(src_dst_copy_paths)
     print("Create subset data (size = {}) from {} to {} done".format(
