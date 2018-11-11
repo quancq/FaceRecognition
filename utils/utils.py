@@ -6,6 +6,18 @@ from settings import DEFAULT_TIME_FORMAT
 import json
 
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(MyEncoder, self).default(obj)
+
+
 def get_time_str(time=datetime.now(), fmt=DEFAULT_TIME_FORMAT):
     return time.strftime(fmt)
 
@@ -40,10 +52,15 @@ def get_paths(parent_dir):
     return dirs
 
 
+def get_file_names(parent_dir):
+    file_names = os.listdir(parent_dir)
+    return file_names
+
+
 def save_json(data, path):
     make_parent_dirs(path)
     with open(path, 'w') as f:
-        json.dump(data, f, ensure_ascii=False)
+        json.dump(data, f, ensure_ascii=False, default=MyEncoder)
     print("Save json data (size = {}) to {} done".format(len(data), path))
 
 
