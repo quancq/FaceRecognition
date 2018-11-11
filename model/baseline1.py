@@ -137,12 +137,13 @@ def create_subset_data(face_encoding_dir, src_dataset_dir, dst_dataset_dir):
         print("{}/{} Calculate similarity of mid {} done".format(i+1, len(mids), mid))
 
         # Remain number images corresponding with highest similarity
-        num_remain_images = math.ceil(similarites[0][1] * 100)
-        for fname, _ in similarites[:num_remain_images]:
-            src_path = os.path.join(src_dataset_dir, mid, fname)
-            dst_path = os.path.join(dst_dataset_dir, mid, fname)
+        if len(similarites) > 0:
+            num_remain_images = math.ceil(similarites[0][1] * 100)
+            for fname, _ in similarites[:num_remain_images]:
+                src_path = os.path.join(src_dataset_dir, mid, fname)
+                dst_path = os.path.join(dst_dataset_dir, mid, fname)
 
-            src_dst_copy_paths.append((src_path, dst_path))
+                src_dst_copy_paths.append((src_path, dst_path))
 
     num_success = utils.copy_files(src_dst_copy_paths)
     print("Create subset data (size = {}) from {} to {} done".format(
