@@ -167,9 +167,9 @@ if __name__ == "__main__":
     #
     # save_face_encoding(dataset_dir=dataset_dir, save_dir=save_dir)
 
-    # face_encoding_dir = "../Temp/Dataset/Process/face_encodings"
-    # src_dataset_dir = "../Temp/Dataset/CroppedWithAlignedSamples/Original"
-    # dst_dataset_dir = "../Temp/Dataset/Version2"
+    face_encoding_dir = "../Dataset/Process/face_encodings"
+    src_dataset_dir = "/home/quanchu/Dataset/FaceImagCroppedWithAlignmentShorten"
+    dst_dataset_dir = "/home/quanchu/Dataset/Version2"
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--face_encoding_dir", required=True, help="Directory path contain face encodings")
@@ -181,8 +181,22 @@ if __name__ == "__main__":
     src_dataset_dir = args["src_dataset_dir"]
     dst_dataset_dir = args["dst_dataset_dir"]
 
-    create_subset_data(
-        face_encoding_dir=face_encoding_dir,
-        src_dataset_dir=src_dataset_dir,
-        dst_dataset_dir=dst_dataset_dir
-    )
+    # create_subset_data(
+    #     face_encoding_dir=face_encoding_dir,
+    #     src_dataset_dir=src_dataset_dir,
+    #     dst_dataset_dir=dst_dataset_dir
+    # )
+
+    dirs1 = utils.get_file_names(src_dataset_dir)
+    dirs2 = utils.get_file_names(dst_dataset_dir)
+
+    result = []
+    for dir in dirs1:
+        if dir not in dirs2:
+            result.append(dir)
+    for dir in result:
+        path = os.path.join(dst_dataset_dir, dir)
+        utils.make_dirs(path)
+        print("Create dir {} done".format(path))
+
+    print("Total : ", len(result))
