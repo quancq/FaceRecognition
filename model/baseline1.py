@@ -1,9 +1,11 @@
+import sys
 from utils import utils
 import numpy as np
 import time
 import os
 from collections import defaultdict
 import face_recognition
+import argparse
 
 
 def get_face_encodings(dir="../Temp/Dataset"):
@@ -81,9 +83,9 @@ def get_sorted_similarity_images(dir="../Temp/Dataset"):
     return similarities
 
 
-def save_face_encoding(dataset_dir="../Temp/Dataset", save_path="../Temp/Dataset/face_encodings_v1.json"):
+def save_face_encoding(dataset_dir="../Temp/Dataset/Original", save_dir="../Temp/Dataset/Process"):
     start_time = time.time()
-    map = {}
+    save_dir = os.path.join(save_dir, "face_encodings")
     total_files = 0
 
     dirs = utils.get_file_names(parent_dir=dataset_dir)
@@ -93,19 +95,28 @@ def save_face_encoding(dataset_dir="../Temp/Dataset", save_path="../Temp/Dataset
         fencoding_map = {fname: fencoding for fname, fencoding in fencoding_of_dir}
         total_files += len(fencoding_map)
 
-        map.update({dir: fencoding_map})
-        print("\nCalculate {}/{} face encoding dir done".format(i+1, total_dirs))
+        save_path = os.path.join(save_dir, dir)
+        utils.save_json(fencoding_map, save_path)
+        print("Calculate and Save {}/{} face encoding dir done".format(i+1, total_dirs))
 
     exec_time = time.time() - start_time
-    print("\nCalculate face encodings of {} dirs and {} files in dir {} done. Time : {:.2f} seconds".format(
-        len(map), total_files, dataset_dir, exec_time))
-
-    utils.save_json(map, save_path)
-    print("Save face encoding (size = {}) done".format(len(map)))
+    print("\nCalculate face encodings of {} dirs and {} files in dir {} done".format(
+        total_dirs, total_files, dataset_dir))
+    print("Save face encoding to dir {} done".format(save_dir))
+    print("Time : {:.2f} seconds".format(exec_time))
 
 
 if __name__ == "__main__":
-    # dir = "../Dataset/CroppedWithAlignedSamples/m.01_0d4"
-    dir = "../Dataset/CroppedWithAlignedSamples"
 
-    save_face_encoding(dataset_dir=dir, save_path=os.path.join(dir, "face_encodings_v1.json"))
+    dataset_dir = "../Temp/Dataset/Original"
+    save_dir = "../Temp/Dataset/Process"
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset_dir", required=True, help="Directory path of dataset contain multi folder that each folder represent unique person")
+    ap.add_argument("--save_dir", required=True, help="Directory path to save face encodings")
+
+    args = vars(ap.parse_args())
+    dataset_dir = args["dataset_dir"]
+    save_dir = args["save_dir"]
+
+    save_face_encoding(dataset_dir=dataset_dir, save_dir=save_dir)
