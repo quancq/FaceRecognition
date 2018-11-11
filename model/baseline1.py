@@ -3,6 +3,7 @@ from utils import utils
 import numpy as np
 import time
 import os
+import math
 from collections import defaultdict
 import face_recognition
 import argparse
@@ -58,23 +59,35 @@ def get_face_encodings(dir="../Temp/Dataset"):
     return result
 
 
+def calculate_similarity(face_encodings):
+    num_faces = len(face_encodings)
+    similarities = []
+    for i, fencoding in enumerate(face_encodings):
+        other_fencodings = face_encodings[:i] + face_encodings[i+1:]
+        similarity = face_recognition.compare_faces(other_fencodings, fencoding)
+        similarity = np.sum(similarity) / num_faces
+        similarities.append(similarity)
+
+    return similarities
+
+
 def get_sorted_similarity_images(dir="../Temp/Dataset"):
     start_time = time.time()
     # Calculate face encoding of each images in directory
     file_face_encodings = get_face_encodings(dir)
-    file_paths, face_encodings = [], []
-    for fpath, fencoding in file_face_encodings:
-        file_paths.append(fpath)
+    file_names, face_encodings = [], []
+    for fname, fencoding in file_face_encodings:
+        file_names.append(fname)
         face_encodings.append(fencoding)
-    num_files = len(file_paths)
 
-    similarities = []
+    similarities = [(fname, sim) for fname, sim in zip(file_names, calculate_similarity(face_encodings))]
 
-    for i, fencoding in enumerate(face_encodings):
-        other_fencodings = face_encodings[:i] + face_encodings[i+1:]
-        similarity = face_recognition.compare_faces(other_fencodings, fencoding)
-        similarity = np.sum(similarity) / num_files
-        similarities.append((file_paths[i], similarity))
+    # num_files = len(file_names)
+    # for i, fencoding in enumerate(face_encodings):
+    #     other_fencodings = face_encodings[:i] + face_encodings[i+1:]
+    #     similarity = face_recognition.compare_faces(other_fencodings, fencoding)
+    #     similarity = np.sum(similarity) / num_files
+    #     similarities.append((file_names[i], similarity))
 
     similarities.sort(key=lambda x: x[1], reverse=True)
     exec_time = time.time() - start_time
@@ -106,17 +119,67 @@ def save_face_encoding(dataset_dir="../Temp/Dataset/Original", save_dir="../Temp
     print("Time : {:.2f} seconds".format(exec_time))
 
 
+def create_subset_data(face_encoding_dir, src_dataset_dir, dst_dataset_dir):
+    src_dst_copy_paths = []
+    mids = utils.get_file_names(face_encoding_dir)
+    for i, mid in enumerate(mids):
+        file_path = os.path.join(face_encoding_dir, mid)
+        img_fencoding_map = utils.load_json(file_path)
+
+        file_names, face_encodings = [], []
+        for fname, fencoding in img_fencoding_map.items():
+            file_names.append(fname)
+            face_encodings.append(np.array(fencoding))
+
+        similarites = [(fname, sim) for fname, sim in zip(file_names, calculate_similarity(face_encodings))]
+        similarites.sort(key=lambda x: x[1], reverse=True)
+
+        print("{}/{} Calculate similarity of mid {} done".format(i+1, len(mids), mid))
+
+        # Remain number images corresponding with highest similarity
+        num_remain_images = math.ceil(similarites[0][1] * 100)
+        for fname, _ in similarites[:num_remain_images]:
+            src_path = os.path.join(src_dataset_dir, mid, fname)
+            dst_path = os.path.join(dst_dataset_dir, mid, fname)
+
+            src_dst_copy_paths.append((src_path, dst_path))
+
+    num_success = utils.copy_files(src_dst_copy_paths)
+    print("Create subset data (size = {}) from {} to {} done".format(
+        num_success, src_dataset_dir, dst_dataset_dir))
+
+
 if __name__ == "__main__":
 
     dataset_dir = "../Temp/Dataset/Original"
     save_dir = "../Temp/Dataset/Process"
 
+    # ap = argparse.ArgumentParser()
+    # ap.add_argument("--dataset_dir", required=True, help="Directory path of dataset contain multi folder that each folder represent unique person")
+    # ap.add_argument("--save_dir", required=True, help="Directory path to save face encodings")
+    #
+    # args = vars(ap.parse_args())
+    # dataset_dir = args["dataset_dir"]
+    # save_dir = args["save_dir"]
+    #
+    # save_face_encoding(dataset_dir=dataset_dir, save_dir=save_dir)
+
+    # face_encoding_dir = "../Temp/Dataset/Process/face_encodings"
+    # src_dataset_dir = "../Temp/Dataset/CroppedWithAlignedSamples/Original"
+    # dst_dataset_dir = "../Temp/Dataset/Version2"
+
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dataset_dir", required=True, help="Directory path of dataset contain multi folder that each folder represent unique person")
-    ap.add_argument("--save_dir", required=True, help="Directory path to save face encodings")
+    ap.add_argument("--face_encoding_dir", required=True, help="Directory path contain face encodings")
+    ap.add_argument("--src_dataset_dir", required=True, help="Directory path contain source dataset")
+    ap.add_argument("--dst_dataset_dir", required=True, help="Directory path contain destination dataset")
 
     args = vars(ap.parse_args())
-    dataset_dir = args["dataset_dir"]
-    save_dir = args["save_dir"]
+    face_encoding_dir = args["face_encoding_dir"]
+    src_dataset_dir = args["src_dataset_dir"]
+    dst_dataset_dir = args["dst_dataset_dir"]
 
-    save_face_encoding(dataset_dir=dataset_dir, save_dir=save_dir)
+    create_subset_data(
+        face_encoding_dir=face_encoding_dir,
+        src_dataset_dir=src_dataset_dir,
+        dst_dataset_dir=dst_dataset_dir
+    )

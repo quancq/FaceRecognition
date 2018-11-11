@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import os
+import shutil
 from settings import DEFAULT_TIME_FORMAT
 import json
 
@@ -55,6 +56,30 @@ def get_paths(parent_dir):
 def get_file_names(parent_dir):
     file_names = os.listdir(parent_dir)
     return file_names
+
+
+def copy_file(src_path, dst_path):
+    try:
+        make_parent_dirs(dst_path)
+        shutil.copyfile(src_path, dst_path)
+        print("Copy file from {} to {} done".format(src_path, dst_path))
+        return True
+    except Exception:
+        print("Error: when copy file from {} to {}".format(src_path, dst_path))
+        return False
+
+
+def copy_files(src_dst_paths):
+    total_paths = len(src_dst_paths)
+    num_success = 0
+    for i, (src_path, dst_path) in enumerate(src_dst_paths):
+        print("Copying {}/{} ...".format(i+1, total_paths))
+        is_success = copy_file(src_path, dst_path)
+        if is_success:
+            num_success += 1
+
+    print("Copy {}/{} files done".format(num_success, total_paths))
+    return num_success
 
 
 def save_json(data, path):
