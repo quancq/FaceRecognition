@@ -1,13 +1,18 @@
+from utils import utils
+from utils import project_utils
 import sys
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 import time
 import os
 import math
 import argparse
 from collections import defaultdict
 import face_recognition
-from utils import utils
-from utils import project_utils
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC, SVC
 
 
 def _get_face_encodings(dir="../Temp/Dataset"):
@@ -85,7 +90,7 @@ def get_face_encodings(image_path):
     except Exception:
         print("Error: Can not load image from ", image_path)
         
-    return face_encoding
+    return face_encoding.tolist()
 
 
 def calculate_similarity(face_encodings):
@@ -103,7 +108,7 @@ def calculate_similarity(face_encodings):
 def get_sorted_similarity_images(dir="../Temp/Dataset"):
     start_time = time.time()
     # Calculate face encoding of each images in directory
-    file_face_encodings = get_face_encodings(dir)
+    file_face_encodings = _get_face_encodings(dir)
     file_names, face_encodings = [], []
     for fname, fencoding in file_face_encodings:
         file_names.append(fname)
@@ -142,10 +147,10 @@ def save_face_encoding(dataset_dir="../Temp/Dataset/Original", save_dir="../Temp
     save_dir = os.path.join(save_dir, "face_encodings")
     total_files = 0
 
-    dirs = utils.get_file_names(parent_dir=dataset_dir)
+    dirs = utils.get_dir_names(parent_dir=dataset_dir)
     total_dirs = len(dirs)
     for i, dir in enumerate(dirs):
-        fencoding_of_dir = get_face_encodings(os.path.join(dataset_dir, dir))
+        fencoding_of_dir = _get_face_encodings(os.path.join(dataset_dir, dir))
         fencoding_map = {fname: fencoding for fname, fencoding in fencoding_of_dir}
         total_files += len(fencoding_map)
 
@@ -162,7 +167,7 @@ def save_face_encoding(dataset_dir="../Temp/Dataset/Original", save_dir="../Temp
 
 def create_subset_data(face_encoding_dir, src_dataset_dir, dst_dataset_dir):
     src_dst_copy_paths = []
-    mids = utils.get_file_names(face_encoding_dir)
+    mids = utils.get_dir_names(face_encoding_dir)
     for i, mid in enumerate(mids):
         file_path = os.path.join(face_encoding_dir, mid)
         img_fencoding_map = utils.load_json(file_path)
@@ -194,34 +199,43 @@ def create_subset_data(face_encoding_dir, src_dataset_dir, dst_dataset_dir):
 
 
 class BaseLine1Model:
-    def __init__(self, training_data_dir, face_encoding_dir, valid_data_dir):
+    def __init__(self, training_data_dir, face_encoding_dir, mid_name_path):
         self.class_name = self.__class__.__name__
 
         self.training_data_dir = training_data_dir
-        self.valid_data_dir = valid_data_dir
+        # self.valid_data_dir = valid_data_dir
         self.face_encoding_dir = face_encoding_dir
+        self.mid_name_path = mid_name_path
 
         self.models = {}
-        self.mid_name_map = project_utils.load_mid_name_map()
         self.face_encoding_map = {}
 
-    def train(self):
-        print("{}:: Start train {} models : {} ...".format(
-            self.class_name, len(self.models), self.models.keys()))
+        self._init_data()
 
-        if len(self.models) == 0:
-            print("{}:: Can not train models because of empty models".format(self.class_name))
-            return 0
+    def _init_data(self):
+        self.mid_name_map = project_utils.load_mid_name_map(self.mid_name_path)
 
-        # Calculate X_train, y_train conform to sklearn's api
-        mids_train = utils.get_dirs(self.training_data_dir)
+        mids_train = utils.get_dir_names(self.training_data_dir)
+        self.mid_class_map, self.class_mid_map = {}, {}
+        for i, mid in enumerate(mids_train):
+            self.mid_class_map.update({mid: i})
+            self.class_mid_map.update({i: mid})
+
+        self.num_classes = len(mids_train)
+
+    def _load_face_encodings(self):
+        start_time = time.time()
+        X_train, y_train = [], []
+        idx_fname_map = {}
+        mids_train = utils.get_dir_names(self.training_data_dir)
         for mid in mids_train:
             self.face_encoding_map.update({mid: {}})
 
             mid_dir = os.path.join(self.training_data_dir, mid)
             file_names = utils.get_file_names(mid_dir)
 
-            fencoding_map_of_mid = load_face_encoding(self.face_encoding_dir, file_names=[mid])
+            fencoding_map_of_mid = load_face_encoding(self.face_encoding_dir, file_names=[mid]).get(mid)
+            print("face_encoding_map of {} : {}".format(mid, list(fencoding_map_of_mid.keys())))
             num_calculated_files = 0
             for file_name in file_names:
                 fencoding = fencoding_map_of_mid.get(file_name)
@@ -231,21 +245,115 @@ class BaseLine1Model:
                     if len(fencoding) > 0:
                         num_calculated_files += 1
                         fencoding_map_of_mid.update({file_name: fencoding})
-                    pass
-                else:
-                    pass
-
-                # Save face encoding if there is any encoding just calculated
-                if num_calculated_files > 0:
-                    utils.save_json(fencoding_map_of_mid, os.path.join(self.face_encoding_dir, mid))
 
                 if len(fencoding) > 0:
                     self.face_encoding_map[mid].update({file_name: fencoding})
+                    idx_fname_map.update({len(X_train): (mid, file_name)})
+                    X_train.append(fencoding)
+                    y_train.append(self.mid_class_map.get(mid))
 
-    def predict(self):
+            # Save face encoding if there is any encoding just calculated
+            if num_calculated_files > 0:
+                utils.save_json(fencoding_map_of_mid, os.path.join(self.face_encoding_dir, mid))
+
+        self.X_train, self.y_train = np.array(X_train), np.array(y_train)
+        self.idx_fname_map = idx_fname_map
+
+        exec_time = time.time() - start_time
+        print("{}:: Load face encoding done. Time : {:.2f} seconds".format(self.class_name, exec_time))
+
+    def train(self):
+        start_train_time = time.time()
+        print("{}:: Start train {} models : {} ...".format(
+            self.class_name, len(self.models), list(self.models.keys())))
+
+        if len(self.models) == 0:
+            print("{}:: Can not train models because of empty models".format(self.class_name))
+            return 0
+
+        # Load face encoding which is calculated and save face encoding of images have not been calculated
+        # Calculate X_train, y_train conform to sklearn's api
+        self._load_face_encodings()
+
+        print("{}:: Training data size : {}. Num classes : {}".format(
+            self.class_name, self.X_train.shape[0], self.num_classes))
+        print("{}:: X_train shape : {}, y_train shape : {}".format(
+            self.class_name, self.X_train.shape, self.y_train.shape))
+        print("y_train: ", self.y_train)
+
+        for model_name, model in self.models.items():
+            t0 = time.time()
+            model.fit(self.X_train, self.y_train)
+
+            t1 = time.time()
+
+            print("{}:: Training model {} is done. Time : {:.2f} seconds".format(
+                self.class_name, model_name, t1-t0))
+            break
+
+        # Show training result
+        self.show_training_result()
+
+        exec_train_time = time.time() - start_train_time
+        print("{}:: Train {} models done. Time : {:.2f} seconds".format(
+            self.class_name, len(self.models), exec_train_time))
+
+    def show_training_result(self):
+        print("{}:: Show training result ... Not implement !".format(self.class_name))
         pass
 
-    def evaluate(self):
+    def predict_from_image_paths(self, predict_image_paths):
+        face_encodings = []
+        available_fnames = []
+        for img_path in predict_image_paths:
+            fencoding = get_face_encodings(image_path=img_path)
+            if len(fencoding) > 0:
+                face_encodings.append(fencoding)
+                available_fnames.append(utils.get_fname_of_path(img_path))
+
+        X_pred = np.array(face_encodings)
+        _, pred_label_df = self.predict(X_pred)
+        pred_label_df["Image"] = available_fnames
+
+        print("{}:: Predict result ".format(self.class_name))
+        print(pred_label_df.head())
+
+        pass
+
+    def predict(self, X_pred):
+        start_time = time.time()
+        print("{}:: Start predict {} samples".format(self.class_name, X_pred.shape[0]))
+        preds = {}
+        for model_name, model in self.models.items():
+            y_pred = model.predict(X_pred)
+            preds.update({model_name: y_pred})
+
+            print("{}:: Model {} predict done".format(self.class_name, model_name))
+            break
+
+        pred_class_id_df = pd.DataFrame(preds)
+        pred_label_df = pred_class_id_df.applymap(lambda class_id: self.class_mid_map.get(class_id))
+
+        exec_time = time.time() - start_time
+        print("{}:: {} models predict done. Time {:.2f} seconds".format(
+            self.class_name, len(self.models), exec_time))
+
+        return pred_class_id_df, pred_label_df
+
+    def evaluate(self, X_test, y_test, metrics):
+        start_time = time.time()
+        print("{}:: Start evaluate on {} samples with metrics : {}".format(
+            self.class_name, X_test.shape[0], list(metrics.keys())))
+
+        _, pred_label_df = self.predict(X_test)
+        y_pred = pred_label_df.iloc[:, 0].values
+
+        accuracy = accuracy_score(y_test, y_pred)
+        print("{}:: Accuracy : {:.4f} %".format(self.class_name, accuracy * 100))
+
+        exec_time = time.time() - start_time
+        print("{}:: Evaluate {} models done. Time {:.2f} seconds".format(
+            self.class_name, len(self.models), exec_time))
         pass
 
     def add_model(self, name, model):
@@ -267,10 +375,28 @@ class BaseLine1Model:
         pass
 
 
-if __name__ == "__main__":
+def test_pipeline_model():
+    training_data_dir = "../Temp/Dataset/Version2"
+    face_encoding_dir = "../Temp/Dataset/Process/face_encodings"
+    mid_name_path = "../Temp/Dataset/Process/MID_Name.json"
 
-    dataset_dir = "../Temp/Dataset/Original"
-    save_dir = "../Temp/Dataset/Process"
+    model = BaseLine1Model(
+        training_data_dir=training_data_dir,
+        face_encoding_dir=face_encoding_dir,
+        mid_name_path=mid_name_path
+    )
+
+    # Add KNN model
+    knn_model = KNeighborsClassifier()
+    model.add_model("KNN", knn_model)
+
+    model.train()
+
+
+if __name__ == "__main__":
+    pass
+    # dataset_dir = "../Temp/Dataset/Original"
+    # save_dir = "../Temp/Dataset/Process"
 
     # ap = argparse.ArgumentParser()
     # ap.add_argument("--dataset_dir", required=True, help="Directory path of dataset contain multi folder that each folder represent unique person")
@@ -282,19 +408,19 @@ if __name__ == "__main__":
     #
     # save_face_encoding(dataset_dir=dataset_dir, save_dir=save_dir)
 
-    face_encoding_dir = "../Dataset/Process/face_encodings"
-    src_dataset_dir = "/home/quanchu/Dataset/FaceImagCroppedWithAlignmentShorten"
-    dst_dataset_dir = "/home/quanchu/Dataset/Version2"
-
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--face_encoding_dir", required=True, help="Directory path contain face encodings")
-    ap.add_argument("--src_dataset_dir", required=True, help="Directory path contain source dataset")
-    ap.add_argument("--dst_dataset_dir", required=True, help="Directory path contain destination dataset")
-
-    args = vars(ap.parse_args())
-    face_encoding_dir = args["face_encoding_dir"]
-    src_dataset_dir = args["src_dataset_dir"]
-    dst_dataset_dir = args["dst_dataset_dir"]
+    # face_encoding_dir = "../Dataset/Process/face_encodings"
+    # src_dataset_dir = "/home/quanchu/Dataset/FaceImagCroppedWithAlignmentShorten"
+    # dst_dataset_dir = "/home/quanchu/Dataset/Version2"
+    #
+    # ap = argparse.ArgumentParser()
+    # ap.add_argument("--face_encoding_dir", required=True, help="Directory path contain face encodings")
+    # ap.add_argument("--src_dataset_dir", required=True, help="Directory path contain source dataset")
+    # ap.add_argument("--dst_dataset_dir", required=True, help="Directory path contain destination dataset")
+    #
+    # args = vars(ap.parse_args())
+    # face_encoding_dir = args["face_encoding_dir"]
+    # src_dataset_dir = args["src_dataset_dir"]
+    # dst_dataset_dir = args["dst_dataset_dir"]
 
     # create_subset_data(
     #     face_encoding_dir=face_encoding_dir,
@@ -302,16 +428,5 @@ if __name__ == "__main__":
     #     dst_dataset_dir=dst_dataset_dir
     # )
 
-    dirs1 = utils.get_file_names(src_dataset_dir)
-    dirs2 = utils.get_file_names(dst_dataset_dir)
+    test_pipeline_model()
 
-    result = []
-    for dir in dirs1:
-        if dir not in dirs2:
-            result.append(dir)
-    for dir in result:
-        path = os.path.join(dst_dataset_dir, dir)
-        utils.make_dirs(path)
-        print("Create dir {} done".format(path))
-
-    print("Total : ", len(result))
