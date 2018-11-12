@@ -38,24 +38,47 @@ def make_dirs(dir):
 
 
 def make_parent_dirs(path):
-    dir = path[:path.rfind("/")]
+    dir = get_fname_of_path(path)
     make_dirs(dir)
 
 
-def get_dirs(parent_dir):
-    dirs = [os.path.join(parent_dir, dir) for dir in os.listdir(parent_dir)]
-    dirs = [dir for dir in dirs if os.path.isdir(dir)]
-    return dirs
+def get_dir_paths(parent_dir):
+    dir_paths = [os.path.join(parent_dir, dir) for dir in os.listdir(parent_dir)]
+    dir_paths = [dir for dir in dir_paths if os.path.isdir(dir)]
+    return dir_paths
 
 
-def get_paths(parent_dir):
-    dirs = [os.path.join(parent_dir, dir) for dir in os.listdir(parent_dir)]
-    return dirs
+def get_dir_names(parent_dir):
+    dir_names = [dir_name for dir_name in os.listdir(parent_dir)
+                 if os.path.isdir(os.path.join(parent_dir, dir_name))]
+    return dir_names
+
+
+def get_file_paths(parent_dir):
+    file_paths = [os.path.join(parent_dir, file) for file in os.listdir(parent_dir)]
+    file_paths = [file_path for file_path in file_paths if os.path.isfile(file_path)]
+    return file_paths
 
 
 def get_file_names(parent_dir):
-    file_names = os.listdir(parent_dir)
+    file_names = [file_name for file_name in os.listdir(parent_dir)
+                  if os.path.isfile(os.path.join(parent_dir, file_name))]
     return file_names
+
+
+def get_dir_or_file_names(parent_dir):
+    names = os.listdir(parent_dir)
+    return names
+
+
+def get_dir_or_file_paths(parent_dir):
+    names = get_dir_or_file_names(parent_dir)
+    paths = [os.path.join(parent_dir, name) for name in names]
+    return paths
+
+
+def get_fname_of_path(path):
+    return path[:path.rfind("/")]
 
 
 def copy_file(src_path, dst_path):

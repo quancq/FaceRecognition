@@ -36,7 +36,7 @@ def get_compact_mid_map(file_path="../Dataset/Top1M_MidList.Name.tsv", mid_list=
     return compact_map, compact_df
 
 
-def load_mid_name_map(file_path="../Dataset/MID_Name.json"):
+def load_mid_name_map(file_path="..Temp/Dataset/Process/MID_Name.json"):
     map = utils.load_json(file_path)
     return map
 
