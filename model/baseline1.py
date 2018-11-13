@@ -300,48 +300,82 @@ class BaseLine1Model:
         # print("{}:: Evaluate model on training data".format(self.class_name))
         # self.evaluate(self.X_train, self.y_train)
 
-
     def show_training_result(self):
         print("{}:: Show training result ... Not implement !".format(self.class_name))
         pass
 
     def predict_from_image_paths(self, predict_image_paths):
         face_encodings = []
-        available_fnames = []
+        available_fnames, error_fnames = [], []
+        fencoding_time = 0
         for img_path in predict_image_paths:
+            fname = utils.get_fname_of_path(img_path)
+
+            t0 = time.time()
             fencoding = get_face_encodings(image_path=img_path)
+            t = time.time() - t0
+            fencoding_time += t
+
             if len(fencoding) > 0:
                 face_encodings.append(fencoding)
-                available_fnames.append(utils.get_fname_of_path(img_path))
+                available_fnames.append(fname)
+            else:
+                error_fnames.append(fname)
 
         X_pred = np.array(face_encodings)
-        _, pred_label_df = self.predict(X_pred)
+        pred_class_id_df, pred_label_df, pred_times = self.predict(X_pred)
         pred_label_df["Image"] = available_fnames
+        new_pred_time = {}
+        for model_name, pred_time in pred_times:
+            new_pred_time.update({model_name: pred_time + fencoding_time})
 
         print("{}:: Predict result ".format(self.class_name))
         print(pred_label_df.head())
 
-        pass
+        return pred_class_id_df, pred_label_df, new_pred_time
 
     def predict(self, X_pred):
         start_time = time.time()
         print("{}:: Start predict {} samples".format(self.class_name, X_pred.shape[0]))
         preds = {}
+        pred_time = {}
         for model_name, model in self.models.items():
+            t0 = time.time()
             y_pred = model.predict(X_pred)
+            t = time.time() - t0
+
+            pred_time.update({model_name: t})
             preds.update({model_name: y_pred})
 
-            print("{}:: Model {} predict done".format(self.class_name, model_name))
+            print("{}:: Model {} predict done. Time : {:.2f} seconds".format(
+                self.class_name, model_name, t))
             break
 
         pred_class_id_df = pd.DataFrame(preds)
+
+        num_models = len(self.models)
+        # Calculate predict of ensemble
+        preds = pred_class_id_df.values.tolist()
+        major_preds, pred_prob = []
+        for pred in preds:
+            major_label, num_models_pred = project_utils.get_popular_element(pred)
+            major_preds.append(major_label)
+            pred_prob.append(num_models_pred / num_models)
+        ensemble_pred_time = time.time() - start_time
+        pred_time.update({"Ensemble": ensemble_pred_time})
+        print("{}:: Model Ensemble predict done. Time : {:.2f} seconds".format(
+            self.class_name, ensemble_pred_time))
+
+        pred_class_id_df["Ensemble"] = major_preds
         pred_label_df = pred_class_id_df.applymap(lambda class_id: self.class_mid_map.get(class_id))
+        pred_class_id_df["Predict Probability"] = pred_prob
+        pred_label_df["Predict Probability"] = pred_prob
 
         exec_time = time.time() - start_time
         print("{}:: {} models predict done. Time {:.2f} seconds".format(
             self.class_name, len(self.models), exec_time))
 
-        return pred_class_id_df, pred_label_df
+        return pred_class_id_df, pred_label_df, pred_time
 
     def evaluate_from_image_paths(self, test_image_paths, labels=None):
         face_encodings = []
@@ -370,14 +404,12 @@ class BaseLine1Model:
         print("{}:: Start evaluate on {} samples with metrics : {}".format(
             self.class_name, X_test.shape[0], list(metrics.keys())))
 
-        pred_class_id_df, pred_label_df = self.predict(X_test)
+        pred_class_id_df, pred_label_df, pred_times = self.predict(X_test)
         y_pred = pred_class_id_df.iloc[:, 0].values
 
         print("{}:: Predict result".format(self.class_name))
         print(pred_label_df.head())
 
-        print("y_test: ", y_test)
-        print("y_pred: ", y_pred)
         accuracy = accuracy_score(y_test, y_pred)
         print("{}:: Accuracy : {:.4f} %".format(self.class_name, accuracy * 100))
 

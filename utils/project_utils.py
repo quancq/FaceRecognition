@@ -1,7 +1,7 @@
 from utils import utils
 import os
 import pandas as pd
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 
 def get_compact_mid_map(file_path="../Dataset/Top1M_MidList.Name.tsv", mid_list=[]):
@@ -39,6 +39,11 @@ def get_compact_mid_map(file_path="../Dataset/Top1M_MidList.Name.tsv", mid_list=
 def load_mid_name_map(file_path="..Temp/Dataset/Process/MID_Name.json"):
     map = utils.load_json(file_path)
     return map
+
+
+def get_popular_element(elms):
+    popular_element, num_occurrence = Counter(elms).most_common(1)[0]
+    return popular_element, num_occurrence
 
 
 if __name__ == "__main__":
