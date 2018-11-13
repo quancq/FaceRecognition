@@ -13,6 +13,8 @@ import face_recognition
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC, SVC
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+from sklearn.externals import joblib
 
 
 def _get_face_encodings(dir="../Temp/Dataset"):
@@ -209,6 +211,7 @@ class BaseLine1Model:
 
         self.models = {}
         self.face_encoding_map = {}
+        self.train_done = False
 
         self._init_data()
 
@@ -289,8 +292,9 @@ class BaseLine1Model:
 
             print("{}:: Training model {} is done. Time : {:.2f} seconds".format(
                 self.class_name, model_name, t1-t0))
-            break
+            # break
 
+        self.train_done = True
         exec_train_time = time.time() - start_train_time
         print("{}:: Train {} models done. Time : {:.2f} seconds".format(
             self.class_name, len(self.models), exec_train_time))
@@ -305,6 +309,10 @@ class BaseLine1Model:
         pass
 
     def predict_from_image_paths(self, predict_image_paths):
+        if self.train_done is False:
+            print("{}:: Model have not trained".format(self.class_name))
+            return 0
+
         face_encodings = []
         available_fnames, error_fnames = [], []
         fencoding_time = 0
@@ -321,6 +329,8 @@ class BaseLine1Model:
                 available_fnames.append(fname)
             else:
                 error_fnames.append(fname)
+        print("{}:: {} files can not calculate face encoding :\n{}".format(
+            self.class_name, len(error_fnames), error_fnames))
 
         X_pred = np.array(face_encodings)
         pred_class_id_df, pred_label_df, pred_times = self.predict(X_pred)
@@ -335,6 +345,10 @@ class BaseLine1Model:
         return pred_class_id_df, pred_label_df, new_pred_time
 
     def predict(self, X_pred):
+        if self.train_done is False:
+            print("{}:: Model have not trained".format(self.class_name))
+            return 0
+
         start_time = time.time()
         print("{}:: Start predict {} samples".format(self.class_name, X_pred.shape[0]))
         preds = {}
@@ -349,14 +363,14 @@ class BaseLine1Model:
 
             print("{}:: Model {} predict done. Time : {:.2f} seconds".format(
                 self.class_name, model_name, t))
-            break
+            # break
 
         pred_class_id_df = pd.DataFrame(preds)
 
         num_models = len(self.models)
         # Calculate predict of ensemble
         preds = pred_class_id_df.values.tolist()
-        major_preds, pred_prob = []
+        major_preds, pred_prob = [], []
         for pred in preds:
             major_label, num_models_pred = project_utils.get_popular_element(pred)
             major_preds.append(major_label)
@@ -378,8 +392,13 @@ class BaseLine1Model:
         return pred_class_id_df, pred_label_df, pred_time
 
     def evaluate_from_image_paths(self, test_image_paths, labels=None):
+        if self.train_done is False:
+            print("{}:: Model have not trained".format(self.class_name))
+            return 0
+
         face_encodings = []
         available_labels = []
+        error_fpaths = []
         for i, img_path in enumerate(test_image_paths):
             fencoding = get_face_encodings(image_path=img_path)
             if len(fencoding) > 0:
@@ -388,36 +407,84 @@ class BaseLine1Model:
                     available_labels.append(utils.get_parent_name(img_path))
                 else:
                     available_labels.append(labels[i])
+            else:
+                error_fpaths.append(img_path)
 
-        print("available_labels: ", available_labels)
+        print("{}:: {} files can not calculate face encoding :\n{}".format(
+            self.class_name, len(error_fpaths), error_fpaths))
+        # print("available_labels: ", available_labels)
         X_test = np.array(face_encodings)
         y_test = np.array([self.mid_class_map.get(mid) for mid in available_labels])
 
-        pred_label_df = self.evaluate(X_test, y_test)
+        pred_label_df, eval_df = self.evaluate(X_test, y_test)
         pred_label_df["True Label"] = available_labels
 
         print("{}:: Predict result ".format(self.class_name))
         print(pred_label_df.head())
 
-    def evaluate(self, X_test, y_test, metrics={}):
+        print("{}:: Evaluate result ".format(self.class_name))
+        print(eval_df)
+
+        return pred_label_df, eval_df
+
+    def evaluate(self, X_test, y_test):
+        if self.train_done is False:
+            print("{}:: Model have not trained".format(self.class_name))
+            return 0
+
         start_time = time.time()
+
+        unique_labels = np.unique(y_test)
+        metrics = {
+            "Accuracy": dict(metric_fn=accuracy_score),
+            "Precision Macro": dict(metric_fn=precision_score,
+                                    metric_params={"average": "macro", "labels": unique_labels}),
+            "Recall Macro": dict(metric_fn=recall_score,
+                                 metric_params={"average": "macro", "labels": unique_labels}),
+            "F1 Macro": dict(metric_fn=f1_score,
+                             metric_params={"average": "macro", "labels": unique_labels}),
+        }
+
         print("{}:: Start evaluate on {} samples with metrics : {}".format(
             self.class_name, X_test.shape[0], list(metrics.keys())))
 
         pred_class_id_df, pred_label_df, pred_times = self.predict(X_test)
-        y_pred = pred_class_id_df.iloc[:, 0].values
+        # y_pred = pred_class_id_df.iloc[:, 0].values
 
-        print("{}:: Predict result".format(self.class_name))
-        print(pred_label_df.head())
+        # print("{}:: Predict result".format(self.class_name))
+        # print(pred_label_df.head())
 
-        accuracy = accuracy_score(y_test, y_pred)
-        print("{}:: Accuracy : {:.4f} %".format(self.class_name, accuracy * 100))
+        # accuracy = accuracy_score(y_test, y_pred)
+        # print("{}:: Accuracy : {:.4f} %".format(self.class_name, accuracy * 100))
+
+        metric_names = list(metrics.keys())
+        model_names = list(self.models.keys())
+        model_names.append("Ensemble")
+        # print("pred_class_id_df: \n", pred_class_id_df)
+        eval = []
+        for model_name in model_names:
+            row = [model_name]
+            for metric_name in metric_names:
+                metric_fn = metrics[metric_name].get("metric_fn")
+                metric_params = metrics[metric_name].get("metric_params", {})
+
+                y_pred = pred_class_id_df[model_name]
+                val = metric_fn(y_test, y_pred, **metric_params)
+                row.append(val)
+            row.append(pred_times.get(model_name))
+            eval.append(row)
+
+        columns = ["Model"] + metric_names + ["Predict Time"]
+        eval_df = pd.DataFrame(eval, columns=columns)
+
+        # print("{}:: Evaluate result".format(self.class_name))
+        # print(eval_df)
 
         exec_time = time.time() - start_time
         print("{}:: Evaluate {} models done. Time {:.2f} seconds".format(
             self.class_name, len(self.models), exec_time))
 
-        return pred_label_df
+        return pred_label_df, eval_df
 
     def add_model(self, name, model):
         self.models.update({name: model})
@@ -431,11 +498,29 @@ class BaseLine1Model:
             print("{}:: Can not remove model {} because it is not in current models".format(
                 self.class_name, name))
 
-    def save_model(self):
-        pass
+    def save_model(self, save_dir="../Temp/Model"):
+        if self.train_done is False:
+            print("{}:: Model have not trained".format(self.class_name))
+            return 0
+        save_dir = os.path.join(save_dir, "Model_{}".format(utils.get_time_str()))
+        utils.make_dirs(save_dir)
 
-    def load_model(self):
-        pass
+        for model_name, model in self.models.items():
+            save_path = os.path.join(save_dir, model_name)
+            joblib.dump(model, save_path)
+
+        print("{}:: Save {} models to {} done".format(self.class_name, len(self.models), save_dir))
+
+    def load_model(self, model_dir="../Temp/Model"):
+        self.models = {}
+        fnames = utils.get_file_names(model_dir)
+        for fname in fnames:
+            fpath = os.path.join(model_dir, fname)
+            model = joblib.load(fpath)
+            self.models.update({fname: model})
+
+        self.train_done = True
+        print("{}:: Load {} models from {} done".format(self.class_name, len(self.models), model_dir))
 
 
 def test_pipeline_model():
@@ -453,11 +538,26 @@ def test_pipeline_model():
     knn_model = KNeighborsClassifier()
     model.add_model("KNN", knn_model)
 
+    linear_svm_model = LinearSVC()
+    model.add_model("LinearSVM", linear_svm_model)
+
     model.train()
 
     # Test
     test_image_dir = "../Temp/Dataset/Test/DV - Quốc Quân"
     test_image_paths = utils.get_file_paths(test_image_dir)
+
+    model.evaluate_from_image_paths(test_image_paths=test_image_paths)
+
+    # Save model
+    save_dir = "../Temp/Model"
+    model.save_model(save_dir=save_dir)
+
+    # Load model
+    model_dir = utils.get_dir_paths(save_dir)[0]
+    model.load_model(model_dir=model_dir)
+
+    # Evaluate model after load model from disk
     model.evaluate_from_image_paths(test_image_paths=test_image_paths)
 
 
