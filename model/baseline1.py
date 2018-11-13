@@ -79,7 +79,7 @@ def get_face_encodings(image_path):
 
         # Calculate face encoding of each image
         try:
-            face_encoding = face_recognition.face_encodings(image)[0]
+            face_encoding = face_recognition.face_encodings(image)[0].tolist()
 
             exec_time = time.time() - start_time
             print("Calculate face encoding of {} done. Time : {:.2f} seconds".format(image_path, exec_time))
@@ -90,7 +90,7 @@ def get_face_encodings(image_path):
     except Exception:
         print("Error: Can not load image from ", image_path)
         
-    return face_encoding.tolist()
+    return face_encoding
 
 
 def calculate_similarity(face_encodings):
@@ -235,7 +235,7 @@ class BaseLine1Model:
             file_names = utils.get_file_names(mid_dir)
 
             fencoding_map_of_mid = load_face_encoding(self.face_encoding_dir, file_names=[mid]).get(mid)
-            print("face_encoding_map of {} : {}".format(mid, list(fencoding_map_of_mid.keys())))
+            # print("face_encoding_map of {} : {}".format(mid, list(fencoding_map_of_mid.keys())))
             num_calculated_files = 0
             for file_name in file_names:
                 fencoding = fencoding_map_of_mid.get(file_name)
@@ -279,7 +279,7 @@ class BaseLine1Model:
             self.class_name, self.X_train.shape[0], self.num_classes))
         print("{}:: X_train shape : {}, y_train shape : {}".format(
             self.class_name, self.X_train.shape, self.y_train.shape))
-        print("y_train: ", self.y_train)
+        # print("y_train: ", self.y_train)
 
         for model_name, model in self.models.items():
             t0 = time.time()
@@ -291,12 +291,15 @@ class BaseLine1Model:
                 self.class_name, model_name, t1-t0))
             break
 
-        # Show training result
-        self.show_training_result()
-
         exec_train_time = time.time() - start_train_time
         print("{}:: Train {} models done. Time : {:.2f} seconds".format(
             self.class_name, len(self.models), exec_train_time))
+
+        # Show training result
+        # self.show_training_result()
+        # print("{}:: Evaluate model on training data".format(self.class_name))
+        # self.evaluate(self.X_train, self.y_train)
+
 
     def show_training_result(self):
         print("{}:: Show training result ... Not implement !".format(self.class_name))
@@ -340,21 +343,49 @@ class BaseLine1Model:
 
         return pred_class_id_df, pred_label_df
 
-    def evaluate(self, X_test, y_test, metrics):
+    def evaluate_from_image_paths(self, test_image_paths, labels=None):
+        face_encodings = []
+        available_labels = []
+        for i, img_path in enumerate(test_image_paths):
+            fencoding = get_face_encodings(image_path=img_path)
+            if len(fencoding) > 0:
+                face_encodings.append(fencoding)
+                if labels is None:
+                    available_labels.append(utils.get_parent_name(img_path))
+                else:
+                    available_labels.append(labels[i])
+
+        print("available_labels: ", available_labels)
+        X_test = np.array(face_encodings)
+        y_test = np.array([self.mid_class_map.get(mid) for mid in available_labels])
+
+        pred_label_df = self.evaluate(X_test, y_test)
+        pred_label_df["True Label"] = available_labels
+
+        print("{}:: Predict result ".format(self.class_name))
+        print(pred_label_df.head())
+
+    def evaluate(self, X_test, y_test, metrics={}):
         start_time = time.time()
         print("{}:: Start evaluate on {} samples with metrics : {}".format(
             self.class_name, X_test.shape[0], list(metrics.keys())))
 
-        _, pred_label_df = self.predict(X_test)
-        y_pred = pred_label_df.iloc[:, 0].values
+        pred_class_id_df, pred_label_df = self.predict(X_test)
+        y_pred = pred_class_id_df.iloc[:, 0].values
 
+        print("{}:: Predict result".format(self.class_name))
+        print(pred_label_df.head())
+
+        print("y_test: ", y_test)
+        print("y_pred: ", y_pred)
         accuracy = accuracy_score(y_test, y_pred)
         print("{}:: Accuracy : {:.4f} %".format(self.class_name, accuracy * 100))
 
         exec_time = time.time() - start_time
         print("{}:: Evaluate {} models done. Time {:.2f} seconds".format(
             self.class_name, len(self.models), exec_time))
-        pass
+
+        return pred_label_df
 
     def add_model(self, name, model):
         self.models.update({name: model})
@@ -391,6 +422,11 @@ def test_pipeline_model():
     model.add_model("KNN", knn_model)
 
     model.train()
+
+    # Test
+    test_image_dir = "../Temp/Dataset/Test/DV - Quốc Quân"
+    test_image_paths = utils.get_file_paths(test_image_dir)
+    model.evaluate_from_image_paths(test_image_paths=test_image_paths)
 
 
 if __name__ == "__main__":

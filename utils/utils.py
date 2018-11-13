@@ -38,7 +38,7 @@ def make_dirs(dir):
 
 
 def make_parent_dirs(path):
-    dir = get_fname_of_path(path)
+    dir = get_parent_path(path)
     make_dirs(dir)
 
 
@@ -78,7 +78,16 @@ def get_dir_or_file_paths(parent_dir):
 
 
 def get_fname_of_path(path):
+    return path[path.rfind("/")+1:]
+
+
+def get_parent_path(path):
     return path[:path.rfind("/")]
+
+
+def get_parent_name(path):
+    parent_path = get_parent_path(path)
+    return get_fname_of_path(parent_path)
 
 
 def copy_file(src_path, dst_path):
@@ -113,8 +122,13 @@ def save_json(data, path):
 
 
 def load_json(path):
-    with open(path, 'r') as f:
-        data = json.load(f)
+    data = {}
+    try:
+        with open(path, 'r') as f:
+            data = json.load(f)
+    except Exception:
+        print("Error when load json from ", path)
+
     return data
 
 
