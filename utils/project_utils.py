@@ -46,6 +46,16 @@ def get_popular_element(elms):
     return popular_element, num_occurrence
 
 
+def get_popular_element_batch(elm_matrix):
+    popular_elms, num_occurrences = [], []
+    for row in elm_matrix:
+        popular_elm, num_occurrence = get_popular_element(row)
+        popular_elms.append(popular_elm)
+        num_occurrences.append(num_occurrence)
+
+    return popular_elms, num_occurrences
+
+
 if __name__ == "__main__":
     # map_mid_name = load_mid_name_map()
     # print(len(map_mid_name))
