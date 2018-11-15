@@ -10,10 +10,29 @@ sns.set()
 def plot_simple_fig(y, x=None, save_path=DEFAULT_PLOT_SAVE_PATH, **kwargs):
     fig, ax = plt.subplots()
 
+    title = kwargs.pop("title", None)
+    xlabel = kwargs.pop("xlabel", None)
+    ylabel = kwargs.pop("ylabel", None)
+    xticklabels = kwargs.pop("xticklabels", None)
+    yticklabels = kwargs.pop("yticklabels", None)
+
     if x is None:
         x = list(range(len(y)))
     ax.plot(x, y, **kwargs)
-    ax.legend()
+
+    ax.set_xlim(x[0]-1, x[-1]+1)
+
+    if title is not None:
+        ax.set(title=title)
+    if xlabel is not None:
+        ax.set(xlabel=xlabel)
+    if ylabel is not None:
+         ax.set(ylabel=ylabel)
+    if xticklabels is not None:
+        ax.set_xticklabels(xticklabels)
+    if yticklabels is not None:
+        ax.set_yticklabels(yticklabels)
+    # ax.legend()
 
     plt.savefig(save_path)
     plt.close(fig)

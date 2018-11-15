@@ -1,5 +1,5 @@
 from utils import utils
-from utils import project_utils
+from utils import project_utils, plot_utils
 import sys
 import numpy as np
 import pandas as pd
@@ -278,7 +278,9 @@ class BaseLine1Model:
 
         # Load face encoding which is calculated and save face encoding of images have not been calculated
         # Calculate X_train, y_train conform to sklearn's api
+        t0 = time.time()
         self._load_face_encodings()
+        face_encoding_time = time.time() - t0
 
         print("{}:: Training data size : {}. Num classes : {}".format(
             self.class_name, self.X_train.shape[0], self.num_classes))
@@ -286,6 +288,7 @@ class BaseLine1Model:
             self.class_name, self.X_train.shape, self.y_train.shape))
         # print("y_train: ", self.y_train)
 
+        ensemble_train_time = 0
         train_time = []
         model_names = list(self.models.keys())
         for model_name in model_names:
@@ -293,11 +296,14 @@ class BaseLine1Model:
             t0 = time.time()
             model.fit(self.X_train, self.y_train)
             t = time.time() - t0
-            train_time.append(t)
+            train_time.append(t + face_encoding_time)
+            ensemble_train_time += t
 
             print("{}:: Training model {} is done. Time : {:.2f} seconds".format(
                 self.class_name, model_name, t))
             # break
+        model_names.append("Ensemble")
+        train_time.append(ensemble_train_time + face_encoding_time)
 
         self.train_done = True
         exec_train_time = time.time() - start_train_time
@@ -306,8 +312,24 @@ class BaseLine1Model:
 
         # Show training result
         # self.show_training_result()
-        # print("{}:: Evaluate model on training data".format(self.class_name))
-        # self.evaluate(self.X_train, self.y_train)
+        print("{}:: Evaluate model on training data".format(self.class_name))
+        pred_label_df, eval_df = self.evaluate(self.X_train, self.y_train)
+
+        # Save training result
+        save_dir = os.path.join(self.experiment_dir, "Train_Result")
+        save_path = os.path.join(save_dir, "Evaluate_Train.csv")
+        utils.save_csv(eval_df, save_path)
+
+        save_path = os.path.join(save_dir, "Train_Time.png")
+        plot_utils.plot_simple_fig(
+            y=train_time,
+            save_path=save_path,
+            title="Training time",
+            xlabel="Model",
+            ylabel="Time (s)",
+            xticklabels=model_names
+        )
+        print("{}:: Save training result to {} done".format(self.class_name, save_dir))
 
     def show_training_result(self):
         print("{}:: Show training result ... Not implement !".format(self.class_name))
@@ -608,19 +630,19 @@ def test_pipeline_model():
     model.train()
 
     # Test
-    test_image_dir = "../Temp/Dataset/Test/DV - Quốc Quân"
-    test_image_paths = utils.get_file_paths(test_image_dir)
-
-    model.evaluate_from_image_paths(test_image_paths=test_image_paths)
-
-    # Save model
-    save_dir = model.save_model()
-
-    # Load model
-    model.load_model(model_dir=save_dir)
-
-    # Evaluate model after load model from disk
-    model.evaluate_from_image_paths(test_image_paths=test_image_paths)
+    # test_image_dir = "../Temp/Dataset/Test/DV - Quốc Quân"
+    # test_image_paths = utils.get_file_paths(test_image_dir)
+    #
+    # model.evaluate_from_image_paths(test_image_paths=test_image_paths)
+    #
+    # # Save model
+    # save_dir = model.save_model()
+    #
+    # # Load model
+    # model.load_model(model_dir=save_dir)
+    #
+    # # Evaluate model after load model from disk
+    # model.evaluate_from_image_paths(test_image_paths=test_image_paths)
 
 
 if __name__ == "__main__":
