@@ -332,6 +332,24 @@ class BaseLine1Model:
             ylabel="Time (s)",
             ylim=ylim
         )
+
+        columns = list(eval_df.columns)
+        for col in columns:
+            if col != "Model" and col != "Predict Time":
+                eval_df.sort_values(col, ascending=True, inplace=True)
+                model_names = eval_df["Model"].values.tolist()
+                scores = eval_df[col].values.tolist()
+                save_path = os.path.join(save_dir, "Train_{}.png".format(col))
+                plot_utils.plot_bar(
+                    x=model_names,
+                    y=scores,
+                    save_path=save_path,
+                    title=col,
+                    xlabel="Model",
+                    ylabel="Score",
+                    # figsize=(len(model_names) + 2, 5)
+                )
+
         print("{}:: Save training result to {} done".format(self.class_name, save_dir))
 
     def show_training_result(self):
@@ -364,20 +382,23 @@ class BaseLine1Model:
 
         X_pred = np.array(face_encodings)
         pred_class_id_df, pred_label_df, pred_times = self.predict(X_pred)
-        pred_label_df["Image"] = available_fnames
+        # pred_label_df["Image"] = available_fnames
+        pred_class_id_df.insert(0, "Image", available_fnames)
+        pred_label_df.insert(0, "Image", available_fnames)
 
         num_models = len(self.models)
         random_pred = np.random.randint(0, self.num_classes, size=(len(error_fnames), num_models))
         major_labels, num_model_preds = project_utils.get_popular_element_batch(random_pred)
         pred_prob = (np.array(num_model_preds) / num_models).tolist()
         new_class_id_df = pd.DataFrame(random_pred, columns=list(self.models.keys()))
-        new_class_id_df["Ensemble"] = major_labels
+        new_class_id_df.insert(new_class_id_df.shape[1], "Ensemble", major_labels)
         new_label_df = new_class_id_df.applymap(lambda class_id: self.class_mid_map.get(class_id))
 
         new_class_id_df["Predict Probability"] = pred_prob
-        new_class_id_df["Image"] = error_fnames
+        # new_class_id_df["Image"] = error_fnames
+        new_class_id_df.insert(0, "Image", error_fnames)
         new_label_df["Predict Probability"] = pred_prob
-        new_label_df["Image"] = error_fnames
+        new_label_df.insert(0, "Image", error_fnames)
 
         print("News class id df : \n", new_class_id_df)
         pred_class_id_df = pred_class_id_df.append(new_class_id_df, ignore_index=True)
@@ -427,7 +448,7 @@ class BaseLine1Model:
         print("{}:: Model Ensemble predict done. Time : {:.2f} seconds".format(
             self.class_name, ensemble_pred_time))
 
-        pred_class_id_df["Ensemble"] = major_preds
+        pred_class_id_df.insert(pred_class_id_df.shape[1], "Ensemble", major_preds)
         pred_label_df = pred_class_id_df.applymap(lambda class_id: self.class_mid_map.get(class_id))
         pred_class_id_df["Predict Probability"] = pred_prob
         pred_label_df["Predict Probability"] = pred_prob
@@ -438,7 +459,7 @@ class BaseLine1Model:
 
         return pred_class_id_df, pred_label_df, pred_time
 
-    def evaluate_from_image_paths(self, test_image_paths, labels=None):
+    def evaluate_from_image_paths(self, test_image_paths, labels=None, save_result=True):
         if self.train_done is False:
             print("{}:: Model have not trained".format(self.class_name))
             return 0
@@ -508,6 +529,31 @@ class BaseLine1Model:
 
         print("{}:: Evaluate result ".format(self.class_name))
         print(eval_df)
+
+        # Save evaluate result
+        if save_result is True:
+            save_dir = os.path.join(self.experiment_dir, "Test_Result")
+            save_path = os.path.join(save_dir, "Evaluate_Test.csv")
+            utils.save_csv(eval_df, save_path)
+
+            columns = list(eval_df.columns)
+            for col in columns:
+                if col != "Model":
+                    eval_df.sort_values(col, ascending=True, inplace=True)
+                    model_names = eval_df["Model"].values.tolist()
+                    scores = eval_df[col].values.tolist()
+                    save_path = os.path.join(save_dir, "Test_{}.png".format(col))
+                    plot_utils.plot_bar(
+                        x=model_names,
+                        y=scores,
+                        save_path=save_path,
+                        title=col,
+                        xlabel="Model",
+                        ylabel="Score",
+                        # figsize=(len(model_names) + 1, 5)
+                    )
+            save_path = os.path.join(save_dir, "Predict.csv")
+            utils.save_csv(pred_label_df, save_path)
 
         return pred_label_df, eval_df
 
@@ -633,19 +679,19 @@ def test_pipeline_model():
     model.train()
 
     # Test
-    # test_image_dir = "../Temp/Dataset/Test/DV - Quốc Quân"
-    # test_image_paths = utils.get_file_paths(test_image_dir)
-    #
-    # model.evaluate_from_image_paths(test_image_paths=test_image_paths)
-    #
-    # # Save model
-    # save_dir = model.save_model()
-    #
+    test_image_dir = "../Temp/Dataset/Test/DV - Quốc Quân"
+    test_image_paths = utils.get_file_paths(test_image_dir)
+
+    model.evaluate_from_image_paths(test_image_paths=test_image_paths)
+
+    # Save model
+    save_dir = model.save_model()
+
     # # Load model
     # model.load_model(model_dir=save_dir)
     #
     # # Evaluate model after load model from disk
-    # model.evaluate_from_image_paths(test_image_paths=test_image_paths)
+    # model.evaluate_from_image_paths(test_image_paths=test_image_paths, save_result=False)
 
 
 if __name__ == "__main__":

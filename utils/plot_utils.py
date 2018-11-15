@@ -41,7 +41,8 @@ def plot_simple_fig(y, x=None, save_path=DEFAULT_PLOT_SAVE_PATH, **kwargs):
 
 
 def plot_bar(x, y, save_path=DEFAULT_PLOT_SAVE_PATH, **kwargs):
-    fig, ax = plt.subplots()
+    figsize = kwargs.pop("figsize", None)
+    fig, ax = plt.subplots(figsize=figsize)
 
     title = kwargs.pop("title", None)
     xlabel = kwargs.pop("xlabel", None)
@@ -84,7 +85,7 @@ def plot_bar(x, y, save_path=DEFAULT_PLOT_SAVE_PATH, **kwargs):
         ax.set_ylim([ylim_min, ylim_max])
 
     # Show value of each column to see clearly
-    x_offset = -0.02
+    x_offset = 0
     y_offset = 0.02
     for p in ax.patches:
         b = p.get_bbox()
