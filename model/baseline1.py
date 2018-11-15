@@ -321,13 +321,16 @@ class BaseLine1Model:
         utils.save_csv(eval_df, save_path)
 
         save_path = os.path.join(save_dir, "Train_Time.png")
-        plot_utils.plot_simple_fig(
+        time_arr = np.array(train_time)
+        ylim = [time_arr.min(), time_arr.max()]
+        plot_utils.plot_bar(
+            x=model_names,
             y=train_time,
             save_path=save_path,
             title="Training time",
             xlabel="Model",
             ylabel="Time (s)",
-            xticklabels=model_names
+            ylim=ylim
         )
         print("{}:: Save training result to {} done".format(self.class_name, save_dir))
 
@@ -480,7 +483,7 @@ class BaseLine1Model:
             "F1 Macro": dict(metric_fn=f1_score,
                              metric_params={"average": "macro", "labels": unique_labels}),
         }
-        metric_names = list(metrics.keys())
+        metric_names = sorted(list(metrics.keys()))
         model_names = list(self.models.keys())
         model_names.append("Ensemble")
         # print("pred_class_id_df: \n", pred_class_id_df)
@@ -538,7 +541,7 @@ class BaseLine1Model:
         # accuracy = accuracy_score(y_test, y_pred)
         # print("{}:: Accuracy : {:.4f} %".format(self.class_name, accuracy * 100))
 
-        metric_names = list(metrics.keys())
+        metric_names = sorted(list(metrics.keys()))
         model_names = list(self.models.keys())
         model_names.append("Ensemble")
         # print("pred_class_id_df: \n", pred_class_id_df)
