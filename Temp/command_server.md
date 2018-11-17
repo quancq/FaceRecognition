@@ -4,3 +4,7 @@
 * Create subset clean data from original dataset
 	* ``cd FaceRecognition``
 	* ``python3 -m model.baseline1 --face_encoding_dir /home/quan/FaceRecognition/Dataset/Process/face_encodings --src_dataset_dir /home/datasets/msceleb/extracted_images --dst_dataset_dir /home/quan/FaceRecognition/Dataset/Version2``
+	
+* Split dataset to train - test dataset
+	* ``cd FaceRecognition``
+	* ``python3 -m preprocess.prepare_dataset --src_dataset_dir /home/quan/FaceRecognition/Dataset/Version2 --dst_dataset_dir /home/quan/FaceRecognition/Dataset/Split_Version2 --test_size 0.1``

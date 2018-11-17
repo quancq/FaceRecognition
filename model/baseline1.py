@@ -1,5 +1,7 @@
 from utils import utils
 from utils import project_utils, plot_utils
+from eda import calculate_class_distribution
+from settings import RANDOM_STATE
 import sys
 import numpy as np
 import pandas as pd
@@ -11,6 +13,8 @@ import argparse
 from collections import defaultdict
 import face_recognition
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC, SVC
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
@@ -227,6 +231,9 @@ class BaseLine1Model:
 
         self.num_classes = len(mids_train)
 
+        eda_save_dir = os.path.join(self.experiment_dir, "EDA_Result")
+        calculate_class_distribution(self.training_data_dir, save_dir=eda_save_dir)
+
     def _load_face_encodings(self):
         start_time = time.time()
         X_train, y_train = [], []
@@ -290,7 +297,7 @@ class BaseLine1Model:
         ensemble_train_time = 0
         train_time = []
         model_names = list(self.models.keys())
-        for model_name in model_names:
+        for i, model_name in enumerate(model_names):
             model = self.models[model_name]
             t0 = time.time()
             model.fit(self.X_train, self.y_train)
@@ -298,8 +305,8 @@ class BaseLine1Model:
             train_time.append(t + face_encoding_time)
             ensemble_train_time += t
 
-            print("{}:: Training model {} is done. Time : {:.2f} seconds".format(
-                self.class_name, model_name, t))
+            print("{}:: {}/{} Training model {} is done. Time : {:.2f} seconds".format(
+                self.class_name, i+1, len(model_names), model_name, t))
             # break
         model_names.append("Ensemble")
         train_time.append(ensemble_train_time + face_encoding_time)
@@ -505,14 +512,24 @@ class BaseLine1Model:
         # pred_label_df, eval_df = self.evaluate(X_test, y_test)
 
         # Calculate labels
+        map_path_label = {}
         if labels is None:
-            labels = [utils.get_parent_name(img_path) for img_path in test_image_paths]
+            map_path_label = {path: utils.get_parent_name(path) for path in test_image_paths}
+        else:
+            map_path_label = {path: label for path, label in zip(test_image_paths, labels)}
 
         pred_class_id_df, pred_label_df, pred_times = self.predict_from_image_paths(test_image_paths)
-        pred_label_df["True Label"] = labels
+
+        # Calculate true order labels
+        new_labels = []
+        for i, row in pred_label_df.iterrows():
+            img_path = row["Image path"]
+            new_labels.append(map_path_label.get(img_path))
+
+        pred_label_df["True Label"] = new_labels
 
         # Calculate eval_df
-        y_test = np.array([self.mid_class_map.get(mid) for mid in labels])
+        y_test = np.array([self.mid_class_map.get(mid) for mid in new_labels])
         unique_labels = np.unique(y_test)
         metrics = {
             "Accuracy": dict(metric_fn=accuracy_score),
@@ -675,7 +692,7 @@ class BaseLine1Model:
 
 
 def test_pipeline_model():
-    np.random.seed(7)
+    np.random.seed(RANDOM_STATE)
     training_data_dir = "../Temp/Dataset/Version2"
     face_encoding_dir = "../Temp/Dataset/Process/face_encodings"
     mid_name_path = "../Temp/Dataset/Process/MID_Name.json"
@@ -692,7 +709,7 @@ def test_pipeline_model():
     knn_model = KNeighborsClassifier()
     model.add_model("KNN", knn_model)
 
-    linear_svm_model = LinearSVC()
+    linear_svm_model = LinearSVC(random_state=RANDOM_STATE)
     model.add_model("LinearSVM", linear_svm_model)
 
     model.train()

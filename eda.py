@@ -5,7 +5,7 @@ import os
 from utils import utils, plot_utils
 
 
-def calculate_class_distribution(dataset_dir):
+def calculate_class_distribution(dataset_dir, save_dir):
     # dataset_dir = "/home/quanchu/Dataset/FaceImagCroppedWithAlignmentShorten"
     lst = []
 
@@ -19,7 +19,7 @@ def calculate_class_distribution(dataset_dir):
 
     df = pd.DataFrame(lst, columns=["Class", "Number Samples"])
 
-    save_dir = "./EDA/Version2"
+    # save_dir = "./EDA/Version2"
 
     # Save file contain number samples of each class
     utils.save_csv(df, os.path.join(save_dir, "Class-NumSamples.csv"))
@@ -45,7 +45,8 @@ def calculate_class_distribution(dataset_dir):
         ylabel="Number classes",
     )
 
-    print("In {}: has {} dirs".format(dataset_dir, len(dirs)))
+    # print("In {}: has {} dirs".format(dataset_dir, len(dirs)))
+    print("EDA:: Save calculate class distribution to {} done".format(save_dir))
 
 
 if __name__ == "__main__":

@@ -91,7 +91,7 @@ def plot_bar(x, y, save_path=DEFAULT_PLOT_SAVE_PATH, **kwargs):
         b = p.get_bbox()
         text_value = "{:.4f}".format(b.y1)
         ax.annotate(text_value, xy=(b.x0 + x_offset, b.y1 + y_offset))
-
+    ax.tick_params(axis="x", rotation=15)
     # ax.legend()
 
     plt.savefig(save_path)
@@ -100,11 +100,11 @@ def plot_bar(x, y, save_path=DEFAULT_PLOT_SAVE_PATH, **kwargs):
     print("Save figure to {} done".format(save_path))
 
 
-def plot_histogram(values, num_bins=10, save_path=DEFAULT_PLOT_SAVE_PATH, title="", xlabel="", ylabel="", figsize=(8,6), **kwargs):
+def plot_histogram(values, num_bins=10, save_path=DEFAULT_PLOT_SAVE_PATH, title="", xlabel="", ylabel="", figsize=(8, 6), **kwargs):
     fig, ax = plt.subplots(figsize=figsize)
 
     ax.hist(values, bins=num_bins, **kwargs)
-    ax.axhline(np.array(values).mean(), color="grey")
+    # ax.axhline(np.array(values).mean(), color="grey")
     # title = kwargs.get("title")
     ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
 
