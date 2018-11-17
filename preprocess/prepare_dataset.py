@@ -45,6 +45,6 @@ if __name__ == "__main__":
     args = vars(ap.parse_args())
     src_dataset_dir = args["src_dataset_dir"]
     dst_dataset_dir = args["dst_dataset_dir"]
-    test_size = int(args["test_size"])
+    test_size = float(args["test_size"])
 
     split_dataset(src_dataset_dir, dst_dataset_dir, test_size=test_size)
