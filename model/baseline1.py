@@ -406,8 +406,6 @@ class BaseLine1Model:
         major_labels, num_model_preds = project_utils.get_popular_element_batch(random_pred)
         pred_prob = (np.array(num_model_preds) / num_models).tolist()
         new_class_id_df = pd.DataFrame(random_pred, columns=list(self.models.keys()))
-        # idx = new_class_id_df.shape[1]
-        print("Shape: ", new_class_id_df.shape[1])
         new_class_id_df.insert(new_class_id_df.shape[1], "Ensemble", major_labels)
         new_label_df = new_class_id_df.applymap(lambda class_id: self.class_mid_map.get(class_id))
 

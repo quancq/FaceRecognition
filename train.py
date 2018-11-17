@@ -8,6 +8,7 @@ from sklearn.svm import LinearSVC, SVC
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
 
 def train_baseline1(training_data_dir, test_data_dir,
@@ -25,9 +26,21 @@ def train_baseline1(training_data_dir, test_data_dir,
         experiment_dir=experiment_dir
     )
 
+    # Add KNN Grid search
+    knn_gs = GridSearchCV(
+        estimator=KNeighborsClassifier(),
+        param_grid={
+            "n_neighbors": np.arange(10, 30, 1)
+        },
+        n_jobs=-1,
+        cv=3,
+        scoring="accuracy"
+    )
+    model.add_model("KNN_GS", knn_gs)
+
     # Add Logistic model
     lr_model = LogisticRegression(
-        C=1.0,
+        C=0.6,
         solver="lbfgs",
         random_state=RANDOM_STATE,
         n_jobs=-1
@@ -44,7 +57,7 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Kernel SVM model
     kernel_svm_model = SVC(
-        C=0.01,
+        C=0.001,
         gamma=0.1,
         random_state=RANDOM_STATE
     )
@@ -52,7 +65,7 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Random Forest model
     rf_model = RandomForestClassifier(
-        n_estimators=80,
+        n_estimators=100,
         max_depth=80,
         n_jobs=-1,
         random_state=RANDOM_STATE
@@ -95,24 +108,25 @@ def train_baseline1(training_data_dir, test_data_dir,
 
 
 if __name__ == "__main__":
-    # training_data_dir = "./Temp/Dataset/Version2"
-    # face_encoding_dir = "./Temp/Dataset/Process/face_encodings"
-    # mid_name_path = "./Temp/Dataset/Process/MID_Name.json"
-    # experiment_dir = "./Temp/Experiment"
+    training_data_dir = "./Dataset/Train_Test1/Train"
+    test_data_dir = "./Dataset/Train_Test1/Test"
+    face_encoding_dir = "./Dataset/Process/face_encodings"
+    mid_name_path = "./Dataset/Process/MID_Name.json"
+    experiment_dir = "./Experiment"
 
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--training_data_dir", required=True)
-    ap.add_argument("--test_data_dir", required=True)
-    ap.add_argument("--face_encoding_dir", required=True)
-    ap.add_argument("--mid_name_path", required=True, help="Path of file contain mapping from mid to name")
-    ap.add_argument("--experiment_dir", help="Directory to save results", default="./Experiment")
-
-    args = vars(ap.parse_args())
-    training_data_dir = args["training_data_dir"]
-    test_data_dir = args["test_data_dir"]
-    face_encoding_dir = args["face_encoding_dir"]
-    mid_name_path = args["mid_name_path"]
-    experiment_dir = args["experiment_dir"]
+    # ap = argparse.ArgumentParser()
+    # ap.add_argument("--training_data_dir", required=True)
+    # ap.add_argument("--test_data_dir", required=True)
+    # ap.add_argument("--face_encoding_dir", required=True)
+    # ap.add_argument("--mid_name_path", required=True, help="Path of file contain mapping from mid to name")
+    # ap.add_argument("--experiment_dir", help="Directory to save results", default="./Experiment")
+    #
+    # args = vars(ap.parse_args())
+    # training_data_dir = args["training_data_dir"]
+    # test_data_dir = args["test_data_dir"]
+    # face_encoding_dir = args["face_encoding_dir"]
+    # mid_name_path = args["mid_name_path"]
+    # experiment_dir = args["experiment_dir"]
 
     train_baseline1(
         training_data_dir=training_data_dir,
