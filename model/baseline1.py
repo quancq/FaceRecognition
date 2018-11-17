@@ -227,7 +227,6 @@ class BaseLine1Model:
 
         self.num_classes = len(mids_train)
 
-
     def _load_face_encodings(self):
         start_time = time.time()
         X_train, y_train = [], []
@@ -321,8 +320,16 @@ class BaseLine1Model:
         utils.save_csv(eval_df, save_path)
 
         save_path = os.path.join(save_dir, "Train_Time.png")
-        time_arr = np.array(train_time)
-        ylim = [time_arr.min(), time_arr.max()]
+
+        # Sort train time
+        tmp = [(t, name) for t, name in zip(train_time, model_names)]
+        tmp.sort(key=lambda x: x[0])
+        model_names, train_time = [], []
+        for t, name in tmp:
+            model_names.append(name)
+            train_time.append(t)
+
+        ylim = [train_time[0], train_time[-1]]
         plot_utils.plot_bar(
             x=model_names,
             y=train_time,
@@ -362,10 +369,10 @@ class BaseLine1Model:
             return 0
 
         face_encodings = []
-        available_fnames, error_fnames = [], []
+        available_fpaths, error_fpaths = [], []
         fencoding_time = 0
         for img_path in predict_image_paths:
-            fname = utils.get_fname_of_path(img_path)
+            # fname = utils.get_fname_of_path(img_path)
 
             t0 = time.time()
             fencoding = get_face_encodings(image_path=img_path)
@@ -374,35 +381,42 @@ class BaseLine1Model:
 
             if len(fencoding) > 0:
                 face_encodings.append(fencoding)
-                available_fnames.append(fname)
+                available_fpaths.append(img_path)
             else:
-                error_fnames.append(fname)
+                error_fpaths.append(img_path)
         print("{}:: {} files can not calculate face encoding :\n{}".format(
-            self.class_name, len(error_fnames), error_fnames))
+            self.class_name, len(error_fpaths), error_fpaths))
 
         X_pred = np.array(face_encodings)
         pred_class_id_df, pred_label_df, pred_times = self.predict(X_pred)
+        cols = ["Image path"] + pred_label_df.columns.tolist()
         # pred_label_df["Image"] = available_fnames
-        pred_class_id_df.insert(0, "Image", available_fnames)
-        pred_label_df.insert(0, "Image", available_fnames)
+        pred_class_id_df["Image path"] = available_fpaths
+        pred_label_df["Image path"] = available_fpaths
 
         num_models = len(self.models)
-        random_pred = np.random.randint(0, self.num_classes, size=(len(error_fnames), num_models))
+        random_pred = np.random.randint(0, self.num_classes, size=(len(error_fpaths), num_models))
         major_labels, num_model_preds = project_utils.get_popular_element_batch(random_pred)
         pred_prob = (np.array(num_model_preds) / num_models).tolist()
         new_class_id_df = pd.DataFrame(random_pred, columns=list(self.models.keys()))
+        # idx = new_class_id_df.shape[1]
+        print("Shape: ", new_class_id_df.shape[1])
         new_class_id_df.insert(new_class_id_df.shape[1], "Ensemble", major_labels)
         new_label_df = new_class_id_df.applymap(lambda class_id: self.class_mid_map.get(class_id))
 
         new_class_id_df["Predict Probability"] = pred_prob
         # new_class_id_df["Image"] = error_fnames
-        new_class_id_df.insert(0, "Image", error_fnames)
+        new_class_id_df["Image path"] = error_fpaths
         new_label_df["Predict Probability"] = pred_prob
-        new_label_df.insert(0, "Image", error_fnames)
+        new_label_df["Image path"] = error_fpaths
 
-        print("News class id df : \n", new_class_id_df)
+        # print("News class id df : \n", new_class_id_df)
         pred_class_id_df = pred_class_id_df.append(new_class_id_df, ignore_index=True)
         pred_label_df = pred_label_df.append(new_label_df, ignore_index=True)
+
+        # Reindex columns
+        pred_class_id_df = pred_class_id_df.reindex(columns=cols)
+        pred_label_df = pred_label_df.reindex(columns=cols)
 
         new_pred_time = {}
         for model_name, pred_time in pred_times.items():
@@ -452,6 +466,11 @@ class BaseLine1Model:
         pred_label_df = pred_class_id_df.applymap(lambda class_id: self.class_mid_map.get(class_id))
         pred_class_id_df["Predict Probability"] = pred_prob
         pred_label_df["Predict Probability"] = pred_prob
+
+        # Reindex columns
+        cols = list(self.models.keys()) + ["Ensemble", "Predict Probability"]
+        pred_class_id_df = pred_class_id_df.reindex(columns=cols)
+        pred_label_df = pred_label_df.reindex(columns=cols)
 
         exec_time = time.time() - start_time
         print("{}:: {} models predict done. Time {:.2f} seconds".format(
@@ -682,16 +701,16 @@ def test_pipeline_model():
     test_image_dir = "../Temp/Dataset/Test/DV - Quốc Quân"
     test_image_paths = utils.get_file_paths(test_image_dir)
 
-    model.evaluate_from_image_paths(test_image_paths=test_image_paths)
+    # model.evaluate_from_image_paths(test_image_paths=test_image_paths)
 
     # Save model
     save_dir = model.save_model()
 
     # # Load model
-    # model.load_model(model_dir=save_dir)
-    #
-    # # Evaluate model after load model from disk
-    # model.evaluate_from_image_paths(test_image_paths=test_image_paths, save_result=False)
+    model.load_model(model_dir=save_dir)
+
+    # Evaluate model after load model from disk
+    model.evaluate_from_image_paths(test_image_paths=test_image_paths, save_result=True)
 
 
 if __name__ == "__main__":
