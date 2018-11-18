@@ -296,6 +296,8 @@ class BaseLine1Model:
         train_time = []
         model_names = list(self.models.keys())
         for i, model_name in enumerate(model_names):
+            print("{}:: {}/{} Start to train model {} ...".format(
+                self.class_name, i+1, len(model_names), model_name))
             model = self.models[model_name]
             t0 = time.time()
             model.fit(self.X_train, self.y_train)

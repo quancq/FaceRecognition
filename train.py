@@ -30,7 +30,7 @@ def train_baseline1(training_data_dir, test_data_dir,
     knn_gs = GridSearchCV(
         estimator=KNeighborsClassifier(),
         param_grid={
-            "n_neighbors": np.arange(10, 30, 1)
+            "n_neighbors": np.arange(10, 30, 2)
         },
         n_jobs=-1,
         cv=3,
@@ -65,8 +65,8 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Random Forest model
     rf_model = RandomForestClassifier(
-        n_estimators=60,
-        max_depth=80,
+        n_estimators=30,
+        max_depth=50,
         n_jobs=-1,
         random_state=RANDOM_STATE
     )
@@ -74,8 +74,8 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Extra Tree model
     et_model = ExtraTreesClassifier(
-        n_estimators=60,
-        max_depth=80,
+        n_estimators=30,
+        max_depth=50,
         n_jobs=-1,
         random_state=RANDOM_STATE
     )
@@ -83,7 +83,7 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Fully connected model
     fc_model = MLPClassifier(
-        hidden_layer_sizes=(64, 256, 128),
+        hidden_layer_sizes=(256,),
         batch_size=64
     )
     model.add_model("FC", fc_model)
