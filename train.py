@@ -39,16 +39,16 @@ def train_baseline1(training_data_dir, test_data_dir,
     model.add_model("KNN_GS", knn_gs)
 
     # Add Logistic model
-    lr_model = LogisticRegression(
-        C=0.6,
-        solver="lbfgs",
-        random_state=RANDOM_STATE,
-        n_jobs=-1
-    )
-    model.add_model("Logistic", lr_model)
+    # lr_model = LogisticRegression(
+    #     C=0.6,
+    #     solver="lbfgs",
+    #     random_state=RANDOM_STATE,
+    #     n_jobs=-1
+    # )
+    # model.add_model("Logistic", lr_model)
 
     # Add KNN model
-    knn_model = KNeighborsClassifier(n_neighbors=20)
+    knn_model = KNeighborsClassifier(n_neighbors=40, n_jobs=-1)
     model.add_model("KNN", knn_model)
 
     # Add Linear SVM model
@@ -56,16 +56,16 @@ def train_baseline1(training_data_dir, test_data_dir,
     model.add_model("LinearSVM", linear_svm_model)
 
     # Add Kernel SVM model
-    kernel_svm_model = SVC(
-        C=0.001,
-        gamma=0.1,
-        random_state=RANDOM_STATE
-    )
-    model.add_model("KernelSVM", kernel_svm_model)
+    # kernel_svm_model = SVC(
+    #     C=0.001,
+    #     gamma=0.1,
+    #     random_state=RANDOM_STATE
+    # )
+    # model.add_model("KernelSVM", kernel_svm_model)
 
     # Add Random Forest model
     rf_model = RandomForestClassifier(
-        n_estimators=100,
+        n_estimators=60,
         max_depth=80,
         n_jobs=-1,
         random_state=RANDOM_STATE
@@ -74,7 +74,7 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Extra Tree model
     et_model = ExtraTreesClassifier(
-        n_estimators=80,
+        n_estimators=60,
         max_depth=80,
         n_jobs=-1,
         random_state=RANDOM_STATE
@@ -83,7 +83,7 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Fully connected model
     fc_model = MLPClassifier(
-        hidden_layer_sizes=(256, 128, 512),
+        hidden_layer_sizes=(64, 256, 128),
         batch_size=64
     )
     model.add_model("FC", fc_model)

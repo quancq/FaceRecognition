@@ -8,3 +8,7 @@
 * Split dataset to train - test dataset
 	* ``cd FaceRecognition``
 	* ``python3 -m preprocess.prepare_dataset --src_dataset_dir /home/quan/FaceRecognition/Dataset/Version2 --dst_dataset_dir /home/quan/FaceRecognition/Dataset/Split_Version2 --test_size 0.1``
+	
+* Train baseline1
+	* ``cd FaceRecognition``
+	* ``python3 -m train --training_data_dir ./Dataset/Split_Version2/Train --test_data_dir ./Dataset/Split_Version2/Test --face_encoding_dir ./Dataset/Process/face_encodings --mid_name_path ./Dataset/Process/MID_Name.json``
