@@ -2,10 +2,8 @@ from utils import utils
 from utils import project_utils, plot_utils
 from eda import calculate_class_distribution
 from settings import RANDOM_STATE
-import sys
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import time
 import os
 import math
