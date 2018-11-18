@@ -108,25 +108,25 @@ def train_baseline1(training_data_dir, test_data_dir,
 
 
 if __name__ == "__main__":
-    training_data_dir = "./Dataset/Train_Test1/Train"
-    test_data_dir = "./Dataset/Train_Test1/Test"
-    face_encoding_dir = "./Dataset/Process/face_encodings"
-    mid_name_path = "./Dataset/Process/MID_Name.json"
-    experiment_dir = "./Experiment"
+    # training_data_dir = "./Dataset/Train_Test1/Train"
+    # test_data_dir = "./Dataset/Train_Test1/Test"
+    # face_encoding_dir = "./Dataset/Process/face_encodings"
+    # mid_name_path = "./Dataset/Process/MID_Name.json"
+    # experiment_dir = "./Experiment"
 
-    # ap = argparse.ArgumentParser()
-    # ap.add_argument("--training_data_dir", required=True)
-    # ap.add_argument("--test_data_dir", required=True)
-    # ap.add_argument("--face_encoding_dir", required=True)
-    # ap.add_argument("--mid_name_path", required=True, help="Path of file contain mapping from mid to name")
-    # ap.add_argument("--experiment_dir", help="Directory to save results", default="./Experiment")
-    #
-    # args = vars(ap.parse_args())
-    # training_data_dir = args["training_data_dir"]
-    # test_data_dir = args["test_data_dir"]
-    # face_encoding_dir = args["face_encoding_dir"]
-    # mid_name_path = args["mid_name_path"]
-    # experiment_dir = args["experiment_dir"]
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--training_data_dir", required=True)
+    ap.add_argument("--test_data_dir", required=True)
+    ap.add_argument("--face_encoding_dir", required=True)
+    ap.add_argument("--mid_name_path", required=True, help="Path of file contain mapping from mid to name")
+    ap.add_argument("--experiment_dir", help="Directory to save results", default="./Experiment")
+
+    args = vars(ap.parse_args())
+    training_data_dir = args["training_data_dir"]
+    test_data_dir = args["test_data_dir"]
+    face_encoding_dir = args["face_encoding_dir"]
+    mid_name_path = args["mid_name_path"]
+    experiment_dir = args["experiment_dir"]
 
     train_baseline1(
         training_data_dir=training_data_dir,
