@@ -65,7 +65,8 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Random Forest model
     rf_model = RandomForestClassifier(
-        n_estimators=30,
+        n_estimators=10,
+        max_features=0.7,
         max_depth=50,
         n_jobs=-1,
         random_state=RANDOM_STATE
@@ -74,7 +75,8 @@ def train_baseline1(training_data_dir, test_data_dir,
 
     # Add Extra Tree model
     et_model = ExtraTreesClassifier(
-        n_estimators=30,
+        n_estimators=10,
+        max_features=0.7,
         max_depth=50,
         n_jobs=-1,
         random_state=RANDOM_STATE
