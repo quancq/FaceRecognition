@@ -664,7 +664,7 @@ class BaseLine1Model:
                 self.class_name, name))
 
     def save_model(self, model_name=None):
-        if self.train_done is False:
+        if self.train_done is False and model_name is None:
             print("{}:: Model have not trained".format(self.class_name))
             return 0
 
