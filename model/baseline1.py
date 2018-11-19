@@ -307,6 +307,7 @@ class BaseLine1Model:
 
             print("{}:: {}/{} Training model {} is done. Time : {:.2f} seconds".format(
                 self.class_name, i+1, len(model_names), model_name, t))
+            self.save_model(model_name=model_name)
             # break
         model_names.append("Ensemble")
         train_time.append(ensemble_train_time + face_encoding_time)
@@ -662,7 +663,7 @@ class BaseLine1Model:
             print("{}:: Can not remove model {} because it is not in current models".format(
                 self.class_name, name))
 
-    def save_model(self):
+    def save_model(self, model_name=None):
         if self.train_done is False:
             print("{}:: Model have not trained".format(self.class_name))
             return 0
@@ -670,11 +671,16 @@ class BaseLine1Model:
         save_dir = os.path.join(self.experiment_dir, "Model")
         utils.make_dirs(save_dir)
 
-        for model_name, model in self.models.items():
+        models = [(name, model) for name, model in self.models.items()]
+        if model_name is not None:
+            models = [(model_name, self.models[model_name])]
+
+        for model_name, model in models:
             save_path = os.path.join(save_dir, model_name)
             joblib.dump(model, save_path)
+            print("{}:: Save model {} to {} done".format(self.class_name, model_name, save_path))
 
-        print("{}:: Save {} models to {} done".format(self.class_name, len(self.models), save_dir))
+        print("{}:: Save {} models to {} done".format(self.class_name, len(models), save_dir))
         return save_dir
 
     def load_model(self, model_dir="../Temp/Model"):
