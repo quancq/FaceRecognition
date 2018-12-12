@@ -203,7 +203,7 @@ def create_subset_data(face_encoding_dir, src_dataset_dir, dst_dataset_dir):
 
 
 class BaseLine1Model:
-    def __init__(self, training_data_dir, face_encoding_dir, mid_name_path, experiment_dir):
+    def __init__(self, training_data_dir, face_encoding_dir, mid_name_path, experiment_dir, mode="train"):
         self.class_name = self.__class__.__name__
 
         self.training_data_dir = training_data_dir
@@ -211,6 +211,7 @@ class BaseLine1Model:
         self.face_encoding_dir = face_encoding_dir
         self.mid_name_path = mid_name_path
         self.experiment_dir = os.path.join(experiment_dir, utils.get_time_str())
+        self.mode = mode
 
         self.models = {}
         self.face_encoding_map = {}
@@ -229,8 +230,9 @@ class BaseLine1Model:
 
         self.num_classes = len(mids_train)
 
-        eda_save_dir = os.path.join(self.experiment_dir, "EDA_Result")
-        calculate_class_distribution(self.training_data_dir, save_dir=eda_save_dir)
+        if self.mode == "train":
+            eda_save_dir = os.path.join(self.experiment_dir, "EDA_Result")
+            calculate_class_distribution(self.training_data_dir, save_dir=eda_save_dir)
 
     def _load_face_encodings(self):
         start_time = time.time()
@@ -683,13 +685,14 @@ class BaseLine1Model:
         print("{}:: Save {} models to {} done".format(self.class_name, len(models), save_dir))
         return save_dir
 
-    def load_model(self, model_dir="../Temp/Model"):
+    def load_model(self, model_dir="../Temp/Model", model_names=[]):
         self.models = {}
         fnames = utils.get_file_names(model_dir)
         for fname in fnames:
-            fpath = os.path.join(model_dir, fname)
-            model = joblib.load(fpath)
-            self.models.update({fname: model})
+            if len(model_names) > 0 and fname in model_names:
+                fpath = os.path.join(model_dir, fname)
+                model = joblib.load(fpath)
+                self.models.update({fname: model})
 
         self.train_done = True
         print("{}:: Load {} models from {} done".format(self.class_name, len(self.models), model_dir))

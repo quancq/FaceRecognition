@@ -11,4 +11,8 @@
 	
 * Train baseline1
 	* ``cd FaceRecognition``
-	* ``python3 -m train --training_data_dir ./Dataset/Split_Version2/Train --test_data_dir ./Dataset/Split_Version2/Test --face_encoding_dir ./Dataset/Process/face_encodings --mid_name_path ./Dataset/Process/MID_Name.json``
+	* ``python3 -m train --training_data_dir ./Dataset/Split_Version2/Train --test_data_dir ./Dataset/Split_Version2/Test --face_encoding_dir ./Dataset/Process/face_encodings --mid_name_path ./Dataset/Process/MID_Name.json --model_names "KNN-RandomForest"``
+	
+* Evaluate baseline1
+	* ``cd FaceRecognition``
+	* ``python3 -m evaluate --training_data_dir ./Dataset/Split_Version2/Train --test_data_dir ./Dataset/Split_Version2/Test --face_encoding_dir ./Dataset/Process/face_encodings --mid_name_path ./Dataset/Process/MID_Name.json --model_dir ./Dataset/Experiment/2018-11-19_22-56-34/Model --model_names "KNN"``

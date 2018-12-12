@@ -1,2 +1,6 @@
 __pycache__/
 .idea/
+Temp/
+Experiment/
+Dataset/Test_Split/
+Dataset/Train_Test1/
