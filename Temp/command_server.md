@@ -22,3 +22,4 @@
 	
 * Train pretrained
 	* ``python3 src/classifier.py TRAIN ../FaceRecognition/Dataset/Resized_Split_Version2/Train ./model/pretrained_1/20170512-110547.pb ./model/my_model/my_cls.pkl --batch_size 128``
+	

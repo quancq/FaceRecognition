@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 from utils_dir import utils, plot_utils
+import argparse
 
 
 def calculate_class_distribution(dataset_dir, save_dir):
@@ -49,5 +50,15 @@ def calculate_class_distribution(dataset_dir, save_dir):
 
 
 if __name__ == "__main__":
-    calculate_class_distribution(dataset_dir="/home/quanchu/Dataset/Version2")
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset_dir", required=True)
+    ap.add_argument("--save_dir", required=True)
+
+    args = vars(ap.parse_args())
+    dataset_dir = args["dataset_dir"]
+    save_dir = args["save_dir"]
+
+    calculate_class_distribution(dataset_dir=dataset_dir, save_dir=save_dir)
     pass
+
