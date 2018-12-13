@@ -27,8 +27,8 @@ def calculate_class_distribution(dataset_dir, save_dir):
 
     # Save file contain statistic about class distribution
     arr = df["Number Samples"].values
-    min, max, mean, std = arr.min(), arr.max(), arr.mean(), arr.std()
-    stats = [("min", min), ("max", max), ("mean", mean), ("std", std)]
+    min, max, mean, std, sum = arr.min(), arr.max(), arr.mean(), arr.std(), arr.sum()
+    stats = [("min", min), ("max", max), ("mean", mean), ("std", std), ("sum", sum)]
 
     stats_df = pd.DataFrame(stats, columns=["Statistic", "Value"])
     utils.save_csv(stats_df, os.path.join(save_dir, "Statistic.csv"))
