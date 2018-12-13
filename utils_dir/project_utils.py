@@ -112,12 +112,12 @@ def copy_subset_args():
     max_classes = int(args["max_classes"])
 
     num_classes = 0
-    for class_dir in utils.get_dir_paths(src_dataset_dir):
-        file_names = utils.get_file_names(class_dir)
+    for class_name in utils.get_dir_names(src_dataset_dir):
+        file_names = utils.get_file_names(os.path.join(src_dataset_dir, class_name))
         if len(file_names) >= min_imgs_per_class:
             num_classes += 1
-            src_dst_paths = [(os.path.join(src_dataset_dir, class_dir, src_name),
-                              os.path.join(dst_dataset_dir, class_dir, src_name))
+            src_dst_paths = [(os.path.join(src_dataset_dir, class_name, src_name),
+                              os.path.join(dst_dataset_dir, class_name, src_name))
                              for src_name in file_names]
             utils.copy_files(src_dst_paths)
 
