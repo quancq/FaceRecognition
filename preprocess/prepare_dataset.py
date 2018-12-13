@@ -1,4 +1,4 @@
-from utils import utils
+from utils_dir import utils
 import os
 from sklearn.model_selection import train_test_split
 import argparse

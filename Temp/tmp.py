@@ -1,5 +1,5 @@
-from utils import utils
-from utils import project_utils
+from utils_dir import utils
+from utils_dir import project_utils
 import face_recognition
 import os
 from model import baseline1

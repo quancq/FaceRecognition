@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
-from utils import utils, plot_utils
+from utils_dir import utils, plot_utils
 
 
 def calculate_class_distribution(dataset_dir, save_dir):

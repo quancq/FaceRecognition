@@ -1,5 +1,5 @@
-from utils import utils
-from utils import project_utils, plot_utils
+from utils_dir import utils
+from utils_dir import project_utils, plot_utils
 from eda import calculate_class_distribution
 from settings import RANDOM_STATE
 import numpy as np
@@ -382,7 +382,7 @@ class BaseLine1Model:
         available_fpaths, error_fpaths = [], []
         fencoding_time = 0
         for img_path in predict_image_paths:
-            # fname = utils.get_fname_of_path(img_path)
+            # fname = utils_dir.get_fname_of_path(img_path)
 
             t0 = time.time()
             fencoding = get_face_encodings(image_path=img_path)
@@ -499,7 +499,7 @@ class BaseLine1Model:
         #     if len(fencoding) > 0:
         #         face_encodings.append(fencoding)
         #         if labels is None:
-        #             available_labels.append(utils.get_parent_name(img_path))
+        #             available_labels.append(utils_dir.get_parent_name(img_path))
         #         else:
         #             available_labels.append(labels[i])
         #     else:

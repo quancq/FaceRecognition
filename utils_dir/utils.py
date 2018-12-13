@@ -90,6 +90,17 @@ def get_parent_name(path):
     return get_fname_of_path(parent_path)
 
 
+def get_all_file_paths(dir, abs_path=False):
+    file_paths = []
+    for root, dirs, files in os.walk(dir):
+        for file in files:
+            path = os.path.join(root, file)
+            if abs_path:
+                path = os.path.abspath(path)
+            file_paths.append(path)
+
+    return file_paths
+
 def copy_file(src_path, dst_path):
     try:
         make_parent_dirs(dst_path)

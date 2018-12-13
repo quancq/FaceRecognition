@@ -1,7 +1,9 @@
-from utils import utils
+from utils_dir import utils
 import os
 import pandas as pd
 from collections import defaultdict, Counter
+import cv2
+import argparse
 
 
 def get_compact_mid_map(file_path="../Dataset/Top1M_MidList.Name.tsv", mid_list=[]):
@@ -56,7 +58,51 @@ def get_popular_element_batch(elm_matrix):
     return popular_elms, num_occurrences
 
 
+def resize_images(src_img_paths, dst_img_paths=None, size=None):
+    if size is not None:
+        if dst_img_paths is None:
+            dst_img_paths = src_img_paths
+        elif len(dst_img_paths) != len(src_img_paths):
+            print("Number destination image paths ({}) not equal with "
+                  "number source image paths ({})".format(len(dst_img_paths), len(src_img_paths)))
+            return 0
+
+        num_resized_imgs = 0
+        for i, (src_path, dst_path) in enumerate(zip(src_img_paths, dst_img_paths)):
+            try:
+                img = cv2.imread(src_path)
+                img = cv2.resize(img, size)
+                cv2.imwrite(dst_path, img)
+                num_resized_imgs += 1
+                print("{}/{} Resize image {} to new shape {} and save to {}".format(
+                    i+1, len(src_img_paths), src_path, size, dst_path))
+            except:
+                print("Error when resize image ", src_path)
+
+        print("Resize {} images successful".format(num_resized_imgs))
+
+
+def resize_images_args():
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--src_image_dir", required=True)
+    ap.add_argument("--size", help="List models to train", default="160")
+
+    args = vars(ap.parse_args())
+    src_image_dir = args["src_image_dir"]
+    size = args["size"]
+
+    src_img_paths = utils.get_all_file_paths(src_image_dir)
+    size = (int(size), int(size))
+    resize_images(src_img_paths=src_img_paths, size=size)
+
+
 if __name__ == "__main__":
     # map_mid_name = load_mid_name_map()
     # print(len(map_mid_name))
+    # src_img_paths = ["../Dataset/Test_Split/Train/m.01_0d4/26-FaceId-0.jpg"]
+    # dst_img_paths = ["/home/quanchu/Pictures/temp1.jpg"]
+
+    resize_images_args()
+
     pass

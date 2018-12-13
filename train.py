@@ -1,6 +1,6 @@
 import numpy as np
 import argparse
-from utils import utils
+from utils_dir import utils
 from settings import RANDOM_STATE
 from model.baseline1 import BaseLine1Model
 from sklearn.neighbors import KNeighborsClassifier
