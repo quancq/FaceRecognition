@@ -86,7 +86,7 @@ def resize_images_args():
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--src_image_dir", required=True)
-    ap.add_argument("--size", help="List models to train", default="160")
+    ap.add_argument("--size", help="New size (pixel) of images", default="160")
 
     args = vars(ap.parse_args())
     src_image_dir = args["src_image_dir"]
@@ -97,12 +97,42 @@ def resize_images_args():
     resize_images(src_img_paths=src_img_paths, size=size)
 
 
+def copy_subset_args():
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--src_dataset_dir", required=True)
+    ap.add_argument("--dst_dataset_dir", required=True)
+    ap.add_argument("--min_imgs_per_class", "-mipc", default="50")
+    ap.add_argument("--max_classes", default="500")
+
+    args = vars(ap.parse_args())
+    src_dataset_dir = args["src_dataset_dir"]
+    dst_dataset_dir = args["dst_dataset_dir"]
+    min_imgs_per_class = int(args["min_imgs_per_class"])
+    max_classes = int(args["max_classes"])
+
+    num_classes = 0
+    for class_dir in utils.get_dir_paths(src_dataset_dir):
+        file_names = utils.get_file_names(class_dir)
+        if len(file_names) >= min_imgs_per_class:
+            num_classes += 1
+            src_dst_paths = [(os.path.join(src_dataset_dir, class_dir, src_name),
+                              os.path.join(dst_dataset_dir, class_dir, src_name))
+                             for src_name in file_names]
+            utils.copy_files(src_dst_paths)
+
+            print("\nCopy {}/{} classes done".format(num_classes, max_classes))
+            if num_classes >= max_classes:
+                break
+
+
 if __name__ == "__main__":
     # map_mid_name = load_mid_name_map()
     # print(len(map_mid_name))
     # src_img_paths = ["../Dataset/Test_Split/Train/m.01_0d4/26-FaceId-0.jpg"]
     # dst_img_paths = ["/home/quanchu/Pictures/temp1.jpg"]
 
-    resize_images_args()
+    # resize_images_args()
+    copy_subset_args()
 
     pass

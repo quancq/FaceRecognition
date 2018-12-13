@@ -16,3 +16,9 @@
 * Evaluate baseline1
 	* ``cd FaceRecognition``
 	* ``python3 -m evaluate --training_data_dir ./Dataset/Split_Version2/Train --test_data_dir ./Dataset/Split_Version2/Test --face_encoding_dir ./Dataset/Process/face_encodings --mid_name_path ./Dataset/Process/MID_Name.json --model_dir ./Experiment/2018-11-19_22-56-34/Model --model_names "KNN"``
+	
+* Reszie images
+	* ``python3 -m utils_dir.project_utils --src_image_dir ./Dataset/Resized_Split_Version2 --size 160``
+	
+* Train pretrained
+	* ``python3 src/classifier.py TRAIN ../FaceRecognition/Dataset/Resized_Split_Version2/Train ./model/pretrained_1/20170512-110547.pb ./model/my_model/my_cls.pkl --batch_size 128``
