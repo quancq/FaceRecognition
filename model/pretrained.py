@@ -1,4 +1,10 @@
 import keras
+import tensorflow as tf
+
+config = tf.ConfigProto(device_count={'GPU': 1, 'CPU': 8})
+sess = tf.Session(config=config)
+keras.backend.set_session(sess)
+
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Flatten
 from keras.models import Model, Sequential
@@ -52,7 +58,7 @@ class MyResNet:
         resnet_base = ResNet50(include_top=False, input_shape=self.input_shape)
 
         # Freeze low layer
-        for layer in resnet_base.layers[:-3]:
+        for layer in resnet_base.layers[:-10]:
             layer.trainable = False
 
         # Show trainable status of each layers
@@ -64,12 +70,11 @@ class MyResNet:
         model = Sequential()
         model.add(resnet_base)
         model.add(Flatten())
+        model.add(Dense(50, activation="relu"))
         model.add(Dense(self.num_classes, activation="softmax"))
 
         print("\nFinal model summary")
-        summary = model.summary()
-        print(summary)
-        utils.save_str(summary, os.path.join(self.save_dir, "Model_Summary.txt"))
+        model.summary()
 
         # Compile model
         model.compile(
