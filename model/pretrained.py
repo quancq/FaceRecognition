@@ -91,7 +91,8 @@ class MyResNet:
 
         # Define callbacks
         save_model_dir = os.path.join(self.save_dir, "Model")
-        loss_path = os.path.join(save_model_dir, "{epoch:02d}-{val_loss:.2f}.h5")
+        utils.make_dirs(save_model_dir)
+        loss_path = os.path.join(save_model_dir, "epochs_{epoch:02d}-val_loss_{val_loss:.2f}.h5")
         loss_checkpoint = ModelCheckpoint(
             filepath=loss_path,
             monitor="val_loss",
@@ -99,7 +100,7 @@ class MyResNet:
             save_best_only=True
         )
 
-        acc_path = os.path.join(save_model_dir, "{epoch:02d}-{val_acc:.2f}.h5")
+        acc_path = os.path.join(save_model_dir, "epochs_{epoch:02d}-val_acc_{val_acc:.2f}.h5")
         acc_checkpoint = ModelCheckpoint(
             filepath=acc_path,
             monitor="val_acc",
