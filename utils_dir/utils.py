@@ -156,3 +156,9 @@ def load_csv(path, **kwargs):
     print("Load csv data (size = {}) from {} done".format(df.shape[0], path))
 
     return df
+
+
+def save_str(str, path):
+    make_parent_dirs(path)
+    with open(path, "w") as f:
+        f.write(str)
