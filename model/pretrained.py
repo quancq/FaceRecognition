@@ -11,6 +11,7 @@ from keras.models import Model, Sequential
 from keras.optimizers import Adam, RMSprop
 from keras.preprocessing.image import ImageDataGenerator
 from keras.applications.resnet50 import ResNet50
+from keras.applications.vgg16 import VGG16
 import os
 import time
 import pandas as pd
@@ -19,7 +20,8 @@ import argparse
 
 
 class MyResNet:
-    def __init__(self, image_size, num_epochs, batch_size, dataset_dir, save_dir):
+    def __init__(self, image_size, num_epochs, batch_size, dataset_dir, save_dir, model_name="VGG16"):
+        self.model_name = model_name
         self.image_size = image_size
         self.input_shape = (self.image_size, self.image_size, 3)
         self.num_epochs = num_epochs
@@ -55,20 +57,26 @@ class MyResNet:
             target_size=(self.image_size, self.image_size),
             batch_size=self.batch_size,
         )
-        resnet_base = ResNet50(include_top=False, input_shape=self.input_shape)
+        if self.model_name == "VGG16":
+            model_base = VGG16(include_top=False, input_shape=self.input_shape)
+        elif self.model_name == "ResNet50":
+            model_base = ResNet50(include_top=False, input_shape=self.input_shape)
+        else:
+            print("Model name {} is not valid ".format(self.model_name))
+            return 0
 
         # Freeze low layer
-        for layer in resnet_base.layers[:-7]:
+        for layer in model_base.layers[:-7]:
             layer.trainable = False
 
         # Show trainable status of each layers
-        print("\nAll layers of resnet50 base")
-        for layer in resnet_base.layers:
+        print("\nAll layers of {} ".format(self.model_name))
+        for layer in model_base.layers:
             print("Layer : {} - Trainable : {}".format(layer, layer.trainable))
 
         self.num_classes = len(train_generator.class_indices)
         model = Sequential()
-        model.add(resnet_base)
+        model.add(model_base)
         model.add(Flatten())
         model.add(Dense(50, activation="relu"))
         model.add(Dropout(0.25))
@@ -128,10 +136,16 @@ class MyResNet:
         # Save history
         acc, val_acc = history.history["acc"], history.history["val_acc"]
         loss, val_loss = history.history["loss"], history.history["val_loss"]
-        data = [acc, val_acc, loss, val_loss]
-        columns = ["Accuracy", "Valid_Accuracy", "Loss", "Valid_Loss"]
-        df = pd.DataFrame(data, columns=columns)
-        save_path = os.path.join(self.save_dir, "history.csv")
+        train_stats = [acc, loss]
+        columns = ["Accuracy", "Loss"]
+        df = pd.DataFrame(train_stats, columns=columns)
+        save_path = os.path.join(self.save_dir, "History_Train.csv")
+        utils.save_csv(df, save_path)
+
+        val_stats = [val_acc, val_loss]
+        columns = ["Valid_Accuracy", "Valid_Loss"]
+        df = pd.DataFrame(val_stats, columns=columns)
+        save_path = os.path.join(self.save_dir, "History_Valid.csv")
         utils.save_csv(df, save_path)
 
         exec_time = time.time() - start_time
@@ -141,6 +155,7 @@ class MyResNet:
 def train():
 
     ap = argparse.ArgumentParser()
+    ap.add_argument("--model_name", default="VGG16")
     ap.add_argument("--dataset_dir", required=True)
     ap.add_argument("--save_dir", default="./Experiment")
     ap.add_argument("--num_epochs", default=100)
@@ -148,6 +163,7 @@ def train():
     ap.add_argument("--batch_size", default=128)
 
     args = vars(ap.parse_args())
+    model_name = args["model_name"]
     dataset_dir = args["dataset_dir"]
     save_dir = args["save_dir"]
     num_epochs = int(args["num_epochs"])
@@ -159,7 +175,8 @@ def train():
         num_epochs=num_epochs,
         batch_size=batch_size,
         dataset_dir=dataset_dir,
-        save_dir=save_dir
+        save_dir=save_dir,
+        model_name=model_name
     )
     model.train()
 

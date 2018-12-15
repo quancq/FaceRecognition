@@ -24,4 +24,4 @@
 	* ``python3 src/classifier.py TRAIN ../FaceRecognition/Dataset/Resized_Split_Version2/Train ./model/pretrained_1/20170512-110547.pb ./model/my_model/my_cls.pkl --batch_size 128``
 
 * Train pretrained resnet
-	* ``python3 -m model.pretrained --dataset_dir ./Dataset/Split_Version3/ --num_epochs 50``
+	* ``python3 -m model.pretrained --dataset_dir ./Dataset/Split_Version3/ --num_epochs 3``
