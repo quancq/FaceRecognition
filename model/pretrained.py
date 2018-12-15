@@ -66,7 +66,7 @@ class MyResNet:
             return 0
 
         # Freeze low layer
-        for layer in model_base.layers[:-7]:
+        for layer in model_base.layers[:-5]:
             layer.trainable = False
 
         # Show trainable status of each layers
