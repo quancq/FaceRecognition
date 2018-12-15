@@ -41,7 +41,7 @@ class MyResNet:
             rotation_range=20,
             width_shift_range=0.2,
             height_shift_range=0.2,
-            vertical_flip=True,
+            horizontal_flip=True,
         )
 
         valid_datagen = ImageDataGenerator(rescale=1./255)
