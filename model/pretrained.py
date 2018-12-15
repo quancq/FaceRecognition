@@ -6,7 +6,7 @@ sess = tf.Session(config=config)
 keras.backend.set_session(sess)
 
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import Dense, Flatten
+from keras.layers import Dense, Flatten, Dropout
 from keras.models import Model, Sequential
 from keras.optimizers import Adam, RMSprop
 from keras.preprocessing.image import ImageDataGenerator
@@ -58,7 +58,7 @@ class MyResNet:
         resnet_base = ResNet50(include_top=False, input_shape=self.input_shape)
 
         # Freeze low layer
-        for layer in resnet_base.layers[:-10]:
+        for layer in resnet_base.layers[:-7]:
             layer.trainable = False
 
         # Show trainable status of each layers
@@ -71,6 +71,7 @@ class MyResNet:
         model.add(resnet_base)
         model.add(Flatten())
         model.add(Dense(50, activation="relu"))
+        model.add(Dropout(0.25))
         model.add(Dense(self.num_classes, activation="softmax"))
 
         print("\nFinal model summary")
@@ -80,7 +81,7 @@ class MyResNet:
         model.compile(
             loss="categorical_crossentropy",
             metrics=["acc"],
-            optimizer=Adam(lr=1e-4)
+            optimizer=Adam(lr=5e-4)
         )
 
         classes = [_ for _ in range(self.num_classes)]
