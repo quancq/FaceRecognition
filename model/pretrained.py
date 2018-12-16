@@ -89,7 +89,7 @@ class MyResNet:
         model.compile(
             loss="categorical_crossentropy",
             metrics=["acc"],
-            optimizer=Adam(lr=1e-3)
+            optimizer=Adam(lr=5e-4)
         )
 
         classes = [_ for _ in range(self.num_classes)]
