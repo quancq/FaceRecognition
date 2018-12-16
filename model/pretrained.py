@@ -66,7 +66,7 @@ class MyResNet:
             return 0
 
         # Freeze low layer
-        for layer in model_base.layers[:-5]:
+        for layer in model_base.layers[:-4]:
             layer.trainable = False
 
         # Show trainable status of each layers
@@ -89,7 +89,7 @@ class MyResNet:
         model.compile(
             loss="categorical_crossentropy",
             metrics=["acc"],
-            optimizer=Adam(lr=5e-4)
+            optimizer=Adam(lr=1e-3)
         )
 
         classes = [_ for _ in range(self.num_classes)]
@@ -102,12 +102,12 @@ class MyResNet:
         save_model_dir = os.path.join(self.save_dir, "Model")
         utils.make_dirs(save_model_dir)
         loss_path = os.path.join(save_model_dir, "epochs_{epoch:02d}-val_loss_{val_loss:.2f}.h5")
-        loss_checkpoint = ModelCheckpoint(
-            filepath=loss_path,
-            monitor="val_loss",
-            verbose=1,
-            save_best_only=True
-        )
+        # loss_checkpoint = ModelCheckpoint(
+        #     filepath=loss_path,
+        #     monitor="val_loss",
+        #     verbose=1,
+        #     save_best_only=True
+        # )
 
         acc_path = os.path.join(save_model_dir, "epochs_{epoch:02d}-val_acc_{val_acc:.2f}.h5")
         acc_checkpoint = ModelCheckpoint(
@@ -116,7 +116,7 @@ class MyResNet:
             verbose=1,
             save_best_only=True
         )
-        callbacks = [loss_checkpoint, acc_checkpoint]
+        callbacks = [acc_checkpoint]
 
         # Train model
         print("Start train model ...")
