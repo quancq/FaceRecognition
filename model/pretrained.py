@@ -184,7 +184,7 @@ def train():
     image_size = int(args["image_size"])
     batch_size = int(args["batch_size"])
     num_trainable_layer = int(args["num_trainable_layer"])
-    lr = int(args["lr"])
+    lr = float(args["lr"])
     opt = args["opt"]
 
     model = MyResNet(
