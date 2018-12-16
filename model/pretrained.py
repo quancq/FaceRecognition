@@ -57,6 +57,7 @@ class MyResNet:
             target_size=(self.image_size, self.image_size),
             batch_size=self.batch_size,
         )
+        self.num_classes = len(train_generator.class_indices)
 
         valid_generator = valid_datagen.flow_from_directory(
             directory=self.valid_dir,
@@ -86,7 +87,6 @@ class MyResNet:
             for layer in model_base.layers:
                 print("Layer : {} - Trainable : {}".format(layer, layer.trainable))
 
-            self.num_classes = len(train_generator.class_indices)
             model = Sequential()
             model.add(model_base)
             model.add(Flatten())
