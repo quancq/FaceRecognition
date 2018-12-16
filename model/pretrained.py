@@ -1,7 +1,7 @@
 import keras
 import tensorflow as tf
 
-config = tf.ConfigProto(device_count={'GPU': 1, 'CPU': 8})
+config = tf.ConfigProto(device_count={'GPU': 2, 'CPU': 12})
 sess = tf.Session(config=config)
 keras.backend.set_session(sess)
 
@@ -20,7 +20,8 @@ import argparse
 
 
 class MyResNet:
-    def __init__(self, image_size, num_epochs, batch_size, dataset_dir, save_dir, model_name="VGG16"):
+    def __init__(self, image_size, num_epochs, batch_size, dataset_dir, save_dir,
+                 model_name="VGG16", num_trainable_layer=5, lr=1e-3, optimizer="Adam"):
         self.model_name = model_name
         self.image_size = image_size
         self.input_shape = (self.image_size, self.image_size, 3)
@@ -28,6 +29,10 @@ class MyResNet:
         self.batch_size = batch_size
         self.save_dir = os.path.join(save_dir, utils.get_time_str())
         self.dataset_dir = dataset_dir
+        self.optimizer = optimizer
+        self.num_trainable_layer = num_trainable_layer
+        self.lr = lr
+
         self.train_dir = os.path.join(dataset_dir, "Train")
         self.valid_dir = os.path.join(dataset_dir, "Valid")
         self.test_dir = os.path.join(dataset_dir, "Test")
@@ -66,7 +71,7 @@ class MyResNet:
             return 0
 
         # Freeze low layer
-        for layer in model_base.layers[:-4]:
+        for layer in model_base.layers[:-self.num_trainable_layer]:
             layer.trainable = False
 
         # Show trainable status of each layers
@@ -86,10 +91,16 @@ class MyResNet:
         model.summary()
 
         # Compile model
+        optimizer = Adam
+        if self.optimizer == "Adam":
+            optimizer = Adam
+        elif self.optimizer == "RMSProp":
+            optimizer = RMSprop
+
         model.compile(
             loss="categorical_crossentropy",
             metrics=["acc"],
-            optimizer=Adam(lr=5e-4)
+            optimizer=optimizer(lr=self.lr)
         )
 
         classes = [_ for _ in range(self.num_classes)]
@@ -161,6 +172,9 @@ def train():
     ap.add_argument("--num_epochs", default=100)
     ap.add_argument("--image_size", default=160)
     ap.add_argument("--batch_size", default=128)
+    ap.add_argument("--num_trainable_layer", default=5)
+    ap.add_argument("--lr", default=0.001)
+    ap.add_argument("--opt", default="Adam")
 
     args = vars(ap.parse_args())
     model_name = args["model_name"]
@@ -169,6 +183,9 @@ def train():
     num_epochs = int(args["num_epochs"])
     image_size = int(args["image_size"])
     batch_size = int(args["batch_size"])
+    num_trainable_layer = int(args["num_trainable_layer"])
+    lr = int(args["lr"])
+    opt = args["opt"]
 
     model = MyResNet(
         image_size=image_size,
@@ -176,7 +193,10 @@ def train():
         batch_size=batch_size,
         dataset_dir=dataset_dir,
         save_dir=save_dir,
-        model_name=model_name
+        model_name=model_name,
+        num_trainable_layer=num_trainable_layer,
+        lr=lr,
+        optimizer=opt
     )
     model.train()
 
