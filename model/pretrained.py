@@ -5,6 +5,9 @@ config = tf.ConfigProto(device_count={'GPU': 2, 'CPU': 12})
 sess = tf.Session(config=config)
 keras.backend.set_session(sess)
 
+from keras import backend as K
+K.set_image_dim_ordering('tf')
+
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Flatten, Dropout, Conv2D, MaxPool2D, BatchNormalization, Input, ReLU
 from keras.models import Model, Sequential, load_model
