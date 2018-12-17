@@ -12,6 +12,10 @@ from keras.optimizers import Adam, RMSprop
 from keras.preprocessing.image import ImageDataGenerator
 from keras.applications.resnet50 import ResNet50
 from keras.applications.vgg16 import VGG16
+from keras.applications.densenet import DenseNet121
+from keras.applications.inception_v3 import InceptionV3
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
+from keras.applications.xception import Xception
 import os
 import time
 import pandas as pd
@@ -74,6 +78,14 @@ class MyResNet:
                 model_base = VGG16(include_top=False, input_shape=self.input_shape)
             elif self.model_name == "ResNet50":
                 model_base = ResNet50(include_top=False, input_shape=self.input_shape)
+            elif self.model_name == "DenseNet121":
+                model_base = DenseNet121(include_top=False, input_shape=self.input_shape)
+            elif self.model_name == "InceptionV3":
+                model_base = InceptionV3(include_top=False, input_shape=self.input_shape)
+            elif self.model_name == "InceptionResNetV2":
+                model_base = InceptionResNetV2(include_top=False, input_shape=self.input_shape)
+            elif self.model_name == "Xception":
+                model_base = Xception(include_top=False, input_shape=self.input_shape)
             else:
                 print("Model name {} is not valid ".format(self.model_name))
                 return 0
@@ -90,8 +102,8 @@ class MyResNet:
             model = Sequential()
             model.add(model_base)
             model.add(Flatten())
-            model.add(Dense(50, activation="relu"))
-            model.add(Dropout(0.25))
+            # model.add(Dense(50, activation="relu"))
+            # model.add(Dropout(0.25))
             model.add(Dense(self.num_classes, activation="softmax"))
 
             # Compile model
@@ -117,7 +129,7 @@ class MyResNet:
         model.classes = classes
 
         # Define callbacks
-        save_model_dir = os.path.join(self.save_dir, "Model")
+        save_model_dir = os.path.join(self.save_dir, "Model_{}".format(self.model_name))
         utils.make_dirs(save_model_dir)
         # loss_path = os.path.join(save_model_dir, "epochs_{epoch:02d}-val_loss_{val_loss:.2f}.h5")
         # loss_checkpoint = ModelCheckpoint(
@@ -138,7 +150,7 @@ class MyResNet:
 
         # Train model
         print("Start train model from {} ...".format(
-            "imagenet pretrained" if self.model_path is None else self.model_path))
+            "{} pretrained".format(self.model_name) if self.model_path is None else self.model_path))
         history = model.fit_generator(
             generator=train_generator,
             steps_per_epoch=train_generator.samples/train_generator.batch_size,
