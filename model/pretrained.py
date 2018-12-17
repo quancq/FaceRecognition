@@ -6,7 +6,7 @@ sess = tf.Session(config=config)
 keras.backend.set_session(sess)
 
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import Dense, Flatten, Dropout
+from keras.layers import Dense, Flatten, Dropout, Conv2D, MaxPool2D, BatchNormalization, Input, ReLU
 from keras.models import Model, Sequential, load_model
 from keras.optimizers import Adam, RMSprop
 from keras.preprocessing.image import ImageDataGenerator
@@ -86,6 +86,24 @@ class MyResNet:
                 model_base = InceptionResNetV2(include_top=False, input_shape=self.input_shape)
             elif self.model_name == "Xception":
                 model_base = Xception(include_top=False, input_shape=self.input_shape)
+            elif self.model_name == "Scratch":
+                model_base = Sequential()
+                model_base.add(Input(shape=self.input_shape))
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(MaxPool2D())
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(MaxPool2D())
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(MaxPool2D())
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(MaxPool2D())
+                self.num_trainable_layer = len(model_base.layers)
             else:
                 print("Model name {} is not valid ".format(self.model_name))
                 return 0
