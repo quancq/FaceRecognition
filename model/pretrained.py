@@ -88,8 +88,7 @@ class MyResNet:
                 model_base = Xception(include_top=False, input_shape=self.input_shape)
             elif self.model_name == "Scratch":
                 model_base = Sequential()
-                model_base.add(Input(shape=self.input_shape))
-                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
+                model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU, input_shape=self.input_shape))
                 model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
                 model_base.add(MaxPool2D())
                 model_base.add(Conv2D(kernel_size=(3, 3), strides=(2, 2), activation=ReLU))
