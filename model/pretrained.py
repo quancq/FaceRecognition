@@ -194,7 +194,7 @@ class MyResNet:
         utils.save_csv(df, save_path)
 
         exec_time = time.time() - start_time
-        print("\nTrain model done. Time : {:.2f} seconds".format(exec_time))
+        print("\nTrain model {} done. Time : {:.2f} seconds".format("{} pretrained".format(self.model_name) if self.model_path is None else self.model_path, exec_time))
 
 
 def train():
