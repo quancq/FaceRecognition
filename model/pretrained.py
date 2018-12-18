@@ -12,6 +12,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Flatten, Dropout, Conv2D, MaxPool2D, BatchNormalization, Input, ReLU
 from keras.models import Model, Sequential, load_model
 from keras.optimizers import Adam, RMSprop
+from keras import regularizers
 from keras.preprocessing.image import ImageDataGenerator
 from keras.applications.resnet50 import ResNet50
 from keras.applications.vgg16 import VGG16
@@ -92,18 +93,18 @@ class MyResNet:
             elif self.model_name == "Scratch":
                 model_base = Sequential()
                 model_base.add(Conv2D(32, kernel_size=(3, 3), activation="relu", input_shape=self.input_shape))
-                model_base.add(Conv2D(32, kernel_size=(3, 3), activation="relu"))
+                model_base.add(Conv2D(32, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
                 model_base.add(MaxPool2D())
-                model_base.add(Conv2D(64, kernel_size=(3, 3), activation="relu"))
-                model_base.add(Conv2D(64, kernel_size=(3, 3), activation="relu"))
+                model_base.add(Conv2D(64, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
+                model_base.add(Conv2D(64, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
                 model_base.add(MaxPool2D())
-                model_base.add(Conv2D(128, kernel_size=(3, 3), activation="relu"))
-                model_base.add(Conv2D(128, kernel_size=(3, 3), activation="relu"))
-                model_base.add(Conv2D(128, kernel_size=(3, 3), activation="relu"))
+                model_base.add(Conv2D(128, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
+                model_base.add(Conv2D(128, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
+                model_base.add(Conv2D(128, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
                 model_base.add(MaxPool2D())
-                model_base.add(Conv2D(256, kernel_size=(3, 3), activation="relu"))
-                model_base.add(Conv2D(256, kernel_size=(3, 3), activation="relu"))
-                model_base.add(Conv2D(256, kernel_size=(3, 3), activation="relu"))
+                model_base.add(Conv2D(256, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
+                model_base.add(Conv2D(256, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
+                model_base.add(Conv2D(256, kernel_size=(3, 3), activation="relu", kernel_regularizer=regularizers.l2(0.001)))
                 model_base.add(MaxPool2D())
                 self.num_trainable_layer = len(model_base.layers)
             else:
@@ -124,7 +125,7 @@ class MyResNet:
             model.add(Flatten())
             # model.add(Dense(50, activation="relu"))
             # model.add(Dropout(0.25))
-            model.add(Dense(self.num_classes, activation="softmax"))
+            model.add(Dense(self.num_classes, activation="softmax", kernel_regularizer=regularizers.l2(0.01)))
 
             # Compile model
             optimizer = Adam
