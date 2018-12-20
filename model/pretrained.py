@@ -186,10 +186,10 @@ class MyResNet:
         #     save_best_only=True
         # )
 
-        acc_path = os.path.join(save_model_dir, "epochs_{epoch:02d}-val_acc_{val_acc:.2f}.h5")
+        acc_path = os.path.join(save_model_dir, "epochs_{epoch:02d}-val_acc_{val_accuracy:.2f}.h5")
         acc_checkpoint = ModelCheckpoint(
             filepath=acc_path,
-            monitor="val_acc",
+            monitor="val_accuracy",
             verbose=1,
             save_best_only=True
         )
