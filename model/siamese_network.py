@@ -4,6 +4,7 @@ K.set_image_dim_ordering('tf')
 from keras.layers import Lambda, Input
 from keras.models import Model, Sequential
 
+
 def euclidean_distance(vects):
     x, y = vects
     sum_square = K.sum(K.square(x - y), axis=1, keepdims=True)
@@ -20,6 +21,10 @@ def contrastive_loss(y_true, y_pred):
     sqaure_pred = K.square(y_pred)
     margin_square = K.square(K.maximum(margin - y_pred, 0))
     return K.mean(y_true * sqaure_pred + (1 - y_true) * margin_square)
+
+
+def accuracy(y_true, y_pred):
+    return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.type)))
 
 
 def get_siamese_model(model_base):

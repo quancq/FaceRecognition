@@ -25,11 +25,14 @@ import time
 import pandas as pd
 from utils_dir import utils
 import argparse
+from utils_dir.image_loader import generate_batch
+from model.siamese_network import contrastive_loss, get_siamese_model, accuracy
 
 
 class MyResNet:
     def __init__(self, image_size, num_epochs, batch_size, dataset_dir, save_dir,
-                 model_name="VGG16", num_trainable_layer=5, lr=1e-3, optimizer="Adam", model_path=None):
+                 model_name="VGG16", num_trainable_layer=5, lr=1e-3,
+                 optimizer="Adam", model_path=None, is_siamese=True):
         self.model_name = model_name
         self.image_size = image_size
         self.input_shape = (self.image_size, self.image_size, 3)
@@ -41,6 +44,7 @@ class MyResNet:
         self.num_trainable_layer = num_trainable_layer
         self.lr = lr
         self.model_path = model_path
+        self.is_siamese = is_siamese
 
         self.train_dir = os.path.join(dataset_dir, "Train")
         self.valid_dir = os.path.join(dataset_dir, "Valid")
@@ -50,29 +54,48 @@ class MyResNet:
         start_time = time.time()
 
         # Setup generator
-        train_datagen = ImageDataGenerator(
-            rescale=1./255,
-            rotation_range=20,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
-            horizontal_flip=True,
-        )
+        if self.is_siamese:
+            train_generator = generate_batch(
+                dataset_dir=self.train_dir,
+                batch_size=self.batch_size,
+                image_size=self.image_size
+            )
+            valid_generator = generate_batch(
+                dataset_dir=self.valid_dir,
+                batch_size=self.batch_size,
+                image_size=self.image_size
+            )
 
-        valid_datagen = ImageDataGenerator(rescale=1./255)
+        else:
+            train_datagen = ImageDataGenerator(
+                rescale=1./255,
+                rotation_range=20,
+                width_shift_range=0.2,
+                height_shift_range=0.2,
+                horizontal_flip=True,
+            )
 
-        train_generator = train_datagen.flow_from_directory(
-            directory=self.train_dir,
-            target_size=(self.image_size, self.image_size),
-            batch_size=self.batch_size,
-        )
+            valid_datagen = ImageDataGenerator(rescale=1./255)
+
+            train_generator = train_datagen.flow_from_directory(
+                directory=self.train_dir,
+                target_size=(self.image_size, self.image_size),
+                batch_size=self.batch_size,
+            )
+
+            valid_generator = valid_datagen.flow_from_directory(
+                directory=self.valid_dir,
+                target_size=(self.image_size, self.image_size),
+                batch_size=self.batch_size,
+            )
+
         self.num_classes = len(train_generator.class_indices)
 
-        valid_generator = valid_datagen.flow_from_directory(
-            directory=self.valid_dir,
-            target_size=(self.image_size, self.image_size),
-            batch_size=self.batch_size,
-        )
-
+        optimizer = Adam
+        if self.optimizer == "Adam":
+            optimizer = Adam
+        elif self.optimizer == "RMSProp":
+            optimizer = RMSprop
         model = None
         # Check training from scratch or continue training
         if self.model_path is not None:
@@ -128,15 +151,17 @@ class MyResNet:
             model.add(Dense(self.num_classes, activation="softmax"))
 
             # Compile model
-            optimizer = Adam
-            if self.optimizer == "Adam":
-                optimizer = Adam
-            elif self.optimizer == "RMSProp":
-                optimizer = RMSprop
-
             model.compile(
                 loss="categorical_crossentropy",
                 metrics=["acc"],
+                optimizer=optimizer(lr=self.lr)
+            )
+
+        if self.is_siamese:
+            model = get_siamese_model(model)
+            model.compile(
+                loss=contrastive_loss,
+                metrics=accuracy,
                 optimizer=optimizer(lr=self.lr)
             )
 
