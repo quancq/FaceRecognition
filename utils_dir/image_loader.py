@@ -25,7 +25,7 @@ def generate_batch(dataset_dir, batch_size=64, image_size=160):
     mid_idx = 0
     max_iter = 0
     while True:
-        x_batch, y_batch = [], []
+        x_batch1, x_batch2, y_batch = [], [], []
         for i in range(int(batch_size / 2)):
             mid_name = mid_names[mid_idx]
             # Generate same class pair
@@ -36,8 +36,8 @@ def generate_batch(dataset_dir, batch_size=64, image_size=160):
             # seq.show_grid(img1, cols=8, rows=8)
             img2 = cv2.imread(fpaths[(path_idx + 1) % len(fpaths)])
 
-            img_pair = [seq.augment_image(img1), seq.augment_image(img2)]
-            x_batch.append(img_pair)
+            x_batch1.append(seq.augment_image(img1))
+            x_batch2.append(seq.augment_image(img2))
             y_batch.append(1)
 
             path_idx = (path_idx + 1) % len(fpaths)
@@ -50,8 +50,8 @@ def generate_batch(dataset_dir, batch_size=64, image_size=160):
             fpaths = map_mid_fpaths.get(next_mid_name)
             img2 = cv2.imread(random.choice(fpaths))
 
-            img_pair = [seq.augment_image(img1), seq.augment_image(img2)]
-            x_batch.append(img_pair)
+            x_batch1.append(seq.augment_image(img1))
+            x_batch2.append(seq.augment_image(img2))
             y_batch.append(0)
 
             mid_idx = (mid_idx + 1) % len(mid_names)
@@ -59,7 +59,7 @@ def generate_batch(dataset_dir, batch_size=64, image_size=160):
                 random.shuffle(mid_names)
 
         # yield np.array(x_batch), np.array(y_batch)
-        yield x_batch, y_batch
+        yield [x_batch1, x_batch2], y_batch
         # max_iter += 1
         # if max_iter > 4:
         #     break
