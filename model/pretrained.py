@@ -235,6 +235,7 @@ def train():
     ap.add_argument("--num_trainable_layer", default=5)
     ap.add_argument("--lr", default=0.001)
     ap.add_argument("--opt", default="Adam")
+    ap.add_argument("--is_siamese", default="y")
 
     args = vars(ap.parse_args())
     model_name = args["model_name"]
@@ -247,6 +248,9 @@ def train():
     num_trainable_layer = int(args["num_trainable_layer"])
     lr = float(args["lr"])
     opt = args["opt"]
+    is_siamese = args["is_siamese"]
+
+    is_siamese = True if is_siamese == "y" else False
 
     model = MyResNet(
         image_size=image_size,
@@ -258,7 +262,8 @@ def train():
         num_trainable_layer=num_trainable_layer,
         lr=lr,
         optimizer=opt,
-        model_path=model_path
+        model_path=model_path,
+        is_siamese=is_siamese
     )
     model.train()
 
