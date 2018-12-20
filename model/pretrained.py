@@ -162,7 +162,7 @@ class MyResNet:
             model = get_siamese_model(model)
             model.compile(
                 loss=contrastive_loss,
-                metrics=accuracy,
+                metrics=[accuracy],
                 optimizer=optimizer(lr=self.lr)
             )
 
