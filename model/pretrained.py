@@ -66,6 +66,8 @@ class MyResNet:
                 image_size=self.image_size
             )
 
+            self.num_classes = len(utils.get_dir_names(self.train_dir))
+
         else:
             train_datagen = ImageDataGenerator(
                 rescale=1./255,
@@ -88,8 +90,7 @@ class MyResNet:
                 target_size=(self.image_size, self.image_size),
                 batch_size=self.batch_size,
             )
-
-        self.num_classes = len(train_generator.class_indices)
+            self.num_classes = len(train_generator.class_indices)
 
         optimizer = Adam
         if self.optimizer == "Adam":
