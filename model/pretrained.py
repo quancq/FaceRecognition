@@ -67,6 +67,8 @@ class MyResNet:
             )
 
             self.num_classes = len(utils.get_dir_names(self.train_dir))
+            train_generator.samples = int(self.num_classes / self.batch_size)
+            train_generator.batch_size = self.batch_size
 
         else:
             train_datagen = ImageDataGenerator(
