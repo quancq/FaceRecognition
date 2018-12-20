@@ -199,17 +199,22 @@ class MyResNet:
         print("Start train model from {} ...".format(
             "{} pretrained".format(self.model_name) if self.model_path is None else self.model_path))
 
-        train_steps_per_epoch = None if self.is_siamese else train_generator.samples/train_generator.batch_size
-        valid_steps_per_epoch = None if self.is_siamese else valid_generator.samples/train_generator.batch_size
-
-        history = model.fit_generator(
-            generator=train_generator,
-            steps_per_epoch=train_steps_per_epoch,
-            epochs=self.num_epochs,
-            validation_data=valid_generator,
-            validation_steps=valid_steps_per_epoch,
-            callbacks=callbacks
-        )
+        if self.is_siamese:
+            history = model.fit_generator(
+                generator=train_generator,
+                epochs=self.num_epochs,
+                validation_data=valid_generator,
+                callbacks=callbacks
+            )
+        else:
+            history = model.fit_generator(
+                generator=train_generator,
+                steps_per_epoch=train_generator.samples/train_generator.batch_size,
+                epochs=self.num_epochs,
+                validation_data=valid_generator,
+                validation_steps=valid_generator.samples/train_generator.batch_size,
+                callbacks=callbacks
+            )
 
         # Save model
         save_path = os.path.join(save_model_dir, "final_model.h5")
