@@ -67,8 +67,6 @@ class MyResNet:
             )
 
             self.num_classes = len(utils.get_dir_names(self.train_dir))
-            train_generator.samples = int(self.num_classes / self.batch_size)
-            train_generator.batch_size = self.batch_size
 
         else:
             train_datagen = ImageDataGenerator(
@@ -200,12 +198,16 @@ class MyResNet:
         # Train model
         print("Start train model from {} ...".format(
             "{} pretrained".format(self.model_name) if self.model_path is None else self.model_path))
+
+        train_steps_per_epoch = None if self.is_siamese else train_generator.samples/train_generator.batch_size
+        valid_steps_per_epoch = None if self.is_siamese else valid_generator.samples/train_generator.batch_size
+
         history = model.fit_generator(
             generator=train_generator,
-            steps_per_epoch=train_generator.samples/train_generator.batch_size,
+            steps_per_epoch=train_steps_per_epoch,
             epochs=self.num_epochs,
             validation_data=valid_generator,
-            validation_steps=valid_generator.samples/valid_generator.batch_size,
+            validation_steps=valid_steps_per_epoch,
             callbacks=callbacks
         )
 
