@@ -24,7 +24,7 @@ def contrastive_loss(y_true, y_pred):
 
 
 def accuracy(y_true, y_pred):
-    return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.type)))
+    return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.dtype)))
 
 
 def get_siamese_model(model_base):
