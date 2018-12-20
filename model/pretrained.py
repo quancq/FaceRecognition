@@ -169,11 +169,11 @@ class MyResNet:
         print("\nFinal model summary")
         model.summary()
 
-        classes = [_ for _ in range(self.num_classes)]
-        for c in train_generator.class_indices:
-            classes[train_generator.class_indices[c]] = c
-
-        model.classes = classes
+        # classes = [_ for _ in range(self.num_classes)]
+        # for c in train_generator.class_indices:
+        #     classes[train_generator.class_indices[c]] = c
+        #
+        # model.classes = classes
 
         # Define callbacks
         save_model_dir = os.path.join(self.save_dir, "Model_{}".format(self.model_name))
