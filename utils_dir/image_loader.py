@@ -58,7 +58,8 @@ def generate_batch(dataset_dir, batch_size=64, image_size=160):
             if mid_idx == 0:
                 random.shuffle(mid_names)
 
-        yield np.array(x_batch), np.array(y_batch)
+        # yield np.array(x_batch), np.array(y_batch)
+        yield x_batch, y_batch
         # max_iter += 1
         # if max_iter > 4:
         #     break
@@ -69,7 +70,7 @@ def test_gen_batch():
     batch_size = 4
 
     for x_batch, y_batch in generate_batch(dataset_dir, batch_size):
-        print(x_batch.shape, y_batch.shape)
+        # print(x_batch.shape, y_batch.shape)
         break
 
 
