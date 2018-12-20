@@ -202,8 +202,10 @@ class MyResNet:
         if self.is_siamese:
             history = model.fit_generator(
                 generator=train_generator,
+                steps_per_epoch=self.num_classes/self.batch_size,
                 epochs=self.num_epochs,
                 validation_data=valid_generator,
+                validation_steps=self.num_classes/self.batch_size,
                 callbacks=callbacks
             )
         else:
