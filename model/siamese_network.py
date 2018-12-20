@@ -28,7 +28,7 @@ def accuracy(y_true, y_pred):
 
 
 def get_siamese_model(model_base):
-    input_shape = model_base.layers[0].get_input_shape_at(0)
+    input_shape = model_base.layers[0].get_input_shape_at(0)[1:]
     print("\nInput shape : ", input_shape)
     input_a = Input(input_shape)
     input_b = Input(input_shape)
